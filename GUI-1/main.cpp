@@ -3,7 +3,7 @@
 #include <FL/fl_ask.H>
 #include <winsock2.h>
 #include "MainWindow.h"
-#include "HomePage.h"
+#include "pugixml.hpp"
 
 // Entry point for the application
 int main(int argc, char** argv) {

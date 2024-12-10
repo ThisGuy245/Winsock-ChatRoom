@@ -4,7 +4,7 @@
 #include <string>
 #include <winsock2.h>
 
-class ClientSocket {
+struct ClientSocket {
 public:
     // Constructor for creating an uninitialized client socket
     ClientSocket();
@@ -17,6 +17,7 @@ public:
 
     // Connect to a server at the given address and port
     bool ConnectToServer(const std::string& address, int port);
+    bool isConnected() const;
 
     // Receive a message from the socket
     bool receive(std::string& message);
@@ -30,14 +31,14 @@ public:
     // Close the socket manually
     void close();
 
-    // Get and set the player ID
-    int getPlayerId() const;
-    void setPlayerId(int id);
+    std::string getUsername() const;
+    void setUsername(const std::string& username);
 
 private:
     SOCKET m_socket;  // Underlying socket
     bool m_closed;    // Whether the socket is closed
     int m_playerId;   // Unique player ID for this client
+    std::string m_username;
 };
 
 #endif // CLIENTSOCKET_H

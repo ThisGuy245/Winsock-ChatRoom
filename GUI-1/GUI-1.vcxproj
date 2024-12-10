@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ChatData.cpp" />
     <ClCompile Include="ClientSocket.cpp" />
     <ClCompile Include="fltk\src\Fl_Generic_Image.cpp" />
     <ClCompile Include="GameManager.cpp" />
@@ -146,10 +147,11 @@
     <ClCompile Include="MainWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ChatData.hpp" />
     <ClInclude Include="ClientSocket.h" />
     <ClInclude Include="GameManager.h" />
-    <ClInclude Include="HomePage.h" />
-    <ClInclude Include="LobbyPage.h" />
+    <ClInclude Include="HomePage.hpp" />
+    <ClInclude Include="LobbyPage.hpp" />
     <ClInclude Include="MyWidget.h" />
     <ClInclude Include="pugiconfig.hpp" />
     <ClInclude Include="pugixml.hpp" />
@@ -160,6 +162,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\Downloads\DrawBox.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="chat_history.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

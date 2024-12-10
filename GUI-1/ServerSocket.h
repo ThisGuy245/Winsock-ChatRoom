@@ -16,11 +16,16 @@ struct ServerSocket {
     void addClient(std::shared_ptr<ClientSocket> client); // Add a new client to the list
     void removeClient(std::shared_ptr<ClientSocket> client); // Remove a client from the list
     void broadcastMessage(const std::string& message);
-    void broadcastPlayerList();
+    void broadcastUserList();
+
+    void setUsername(const std::string& username) {
+        this->username = username; // Assuming `username` is a member variable.
+    }
 
 private:
     SOCKET m_socket; // Socket handle for the server
     std::vector<std::shared_ptr<ClientSocket>> m_clients; // List of connected clients
     ServerSocket(const ServerSocket& _copy); // Copy constructor (disabled)
     ServerSocket& operator=(const ServerSocket& _assign); // Assignment operator (disabled)
+    std::string username;
 };

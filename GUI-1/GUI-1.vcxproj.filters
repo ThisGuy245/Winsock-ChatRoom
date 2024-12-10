@@ -66,6 +66,9 @@
     <ClCompile Include="LobbyPage.cpp">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="ChatData.cpp">
+      <Filter>Source Files\GUI\Pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainWindow.h">
@@ -80,7 +83,7 @@
     <ClInclude Include="pugiconfig.hpp">
       <Filter>Source Files\GUI\Xml</Filter>
     </ClInclude>
-    <ClInclude Include="HomePage.h">
+    <ClInclude Include="HomePage.hpp">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClInclude>
     <ClInclude Include="GameManager.h">
@@ -95,16 +98,24 @@
     <ClInclude Include="ServerSocket.h">
       <Filter>Source Files\Network</Filter>
     </ClInclude>
-    <ClInclude Include="LobbyPage.h">
+    <ClInclude Include="LobbyPage.hpp">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChatData.hpp">
+      <Filter>Source Files\GUI\Pages</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\Downloads\DrawBox.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="chat_history.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

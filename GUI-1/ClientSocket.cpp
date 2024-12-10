@@ -1,16 +1,15 @@
 #include <ws2tcpip.h>
-
 #include "ClientSocket.h"
 #include <stdexcept>
 #include <vector>
 
 // Constructor
 ClientSocket::ClientSocket()
-    : m_socket(INVALID_SOCKET), m_closed(false), m_playerId(0) {}
+    : m_socket(INVALID_SOCKET), m_closed(false), m_username("") {}
 
 // Constructor with existing socket
 ClientSocket::ClientSocket(SOCKET socket)
-    : m_socket(socket), m_closed(false), m_playerId(0) {}
+    : m_socket(socket), m_closed(false), m_username("") {}
 
 // Destructor
 ClientSocket::~ClientSocket() {
@@ -77,12 +76,17 @@ void ClientSocket::close() {
     }
 }
 
-// Get player ID
-int ClientSocket::getPlayerId() const {
-    return m_playerId;
+// Get username
+std::string ClientSocket::getUsername() const {
+    return m_username;
 }
 
-// Set player ID
-void ClientSocket::setPlayerId(int id) {
-    m_playerId = id;
+// Set username
+void ClientSocket::setUsername(const std::string& username) {
+    m_username = username;
+}
+
+bool ClientSocket::isConnected() const { 
+    // Check if the socket is valid and not closed 
+    return m_socket != INVALID_SOCKET && !m_closed; 
 }
