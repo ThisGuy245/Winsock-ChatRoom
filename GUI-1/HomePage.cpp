@@ -83,9 +83,14 @@ std::shared_ptr<ClientSocket> clientSocket;
 
 void HomePage::host_button_callback(Fl_Widget* widget, void* userdata) {
     auto* homePage = static_cast<HomePage*>(userdata);
+    if (!homePage) {
+        fl_alert("Failed to retrieve HomePage instance!");
+        return;
+    }
+
     auto* mainWindow = homePage->m_mainWindow;
     if (!mainWindow) {
-        fl_alert("Failed to retrieve MainWindow!");
+        fl_alert("Failed to retrieve MainWindow instance!");
         return;
     }
 
@@ -97,35 +102,42 @@ void HomePage::host_button_callback(Fl_Widget* widget, void* userdata) {
 
     try {
         // Create ServerSocket
-        serverSocket = std::make_shared<ServerSocket>(8080);
+        auto serverSocket = std::make_shared<ServerSocket>(8080);
         fl_alert("Hosting on port 8080. Waiting for clients...");
 
-        // Set the username
+        // Set the username for the server
         serverSocket->setUsername(username);
 
         // Switch to LobbyPage
-        mainWindow->switch_to_lobby(widget, userdata);
+        mainWindow->switch_to_lobby(widget, mainWindow);
         auto* lobbyPage = mainWindow->getLobbyPage();
-        lobbyPage->setServerSocket(serverSocket, username); // Pass the server socket
+        if (!lobbyPage) {
+            fl_alert("Failed to retrieve LobbyPage instance!");
+            return;
+        }
 
-        // Start accepting connections
-        std::thread([lobbyPage]() {
-            while (true) {
-                try {
+        // Pass the server socket and username to the lobby
+        lobbyPage->setServerSocket(serverSocket, username);
+
+        // Start accepting connections in a separate thread
+        std::thread([serverSocket, lobbyPage]() {
+            try {
+                while (true) {
                     auto newClient = serverSocket->accept();
                     if (newClient) {
                         serverSocket->addClient(newClient);
+                        // You can update the lobby page with the new client if needed
                     }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Avoid busy-waiting
                 }
-                catch (const std::exception& e) {
-                    printf("Error accepting client: %s\n", e.what());
-                    break;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Avoid busy-waiting
+            }
+            catch (const std::exception& e) {
+                printf("Error accepting client: %s\n", e.what());
             }
             }).detach();
 
-            mainWindow->on_close([]() {
+            // Ensure server socket is cleaned up when the application closes
+            mainWindow->on_close([serverSocket]() mutable {
                 if (serverSocket) {
                     serverSocket.reset();
                 }
@@ -136,9 +148,20 @@ void HomePage::host_button_callback(Fl_Widget* widget, void* userdata) {
     }
 }
 
+
+
 void HomePage::join_button_callback(Fl_Widget* widget, void* userdata) {
     auto* homePage = static_cast<HomePage*>(userdata);
+    if (!homePage) {
+        fl_alert("Failed to retrieve HomePage instance!");
+        return;
+    }
+
     auto* mainWindow = homePage->m_mainWindow;
+    if (!mainWindow) {
+        fl_alert("Failed to retrieve MainWindow instance!");
+        return;
+    }
 
     const char* ip = fl_input("Enter host IP:", "127.0.0.1");
     if (!ip || strlen(ip) == 0) return;
@@ -157,27 +180,32 @@ void HomePage::join_button_callback(Fl_Widget* widget, void* userdata) {
             return;
         }
 
-        // Create the client socket
-        clientSocket = std::make_shared<ClientSocket>();
+        // Create the client socket (local variable)
+        auto localClientSocket = std::make_shared<ClientSocket>();
         printf("Attempting to connect to %s:8080\n", ip);
 
-        if (clientSocket->ConnectToServer(ip, 8080)) {
+        if (localClientSocket->ConnectToServer(ip, 8080)) {
             fl_alert("Successfully connected to the server!");
 
             // Set the username
-            clientSocket->setUsername(username);
+            localClientSocket->setUsername(username);
 
             // Switch to LobbyPage
-            mainWindow->switch_to_lobby(widget, userdata);
+            mainWindow->switch_to_lobby(widget, mainWindow);
 
             auto* lobbyPage = mainWindow->getLobbyPage();
-            lobbyPage->setClientSocket(clientSocket, username); // Pass the client socket
+            if (!lobbyPage) {
+                fl_alert("Failed to retrieve LobbyPage instance!");
+                return;
+            }
 
-            bool stopReceiving = false;
-            std::thread([lobbyPage]() {
+            // Pass the client socket and username to the lobby
+            lobbyPage->setClientSocket(localClientSocket, username);
+
+            // Start receiving messages in a separate thread
+            std::thread([localClientSocket, lobbyPage]() {
                 std::string message;
-                auto clientSocket = lobbyPage->getClientSocket();
-                while (clientSocket->receive(message)) {
+                while (localClientSocket->receive(message)) {
                     Fl::lock();
                     lobbyPage->addChatMessage(message);
                     Fl::unlock();
@@ -185,10 +213,16 @@ void HomePage::join_button_callback(Fl_Widget* widget, void* userdata) {
                 }
                 }).detach();
 
-                mainWindow->on_close([&stopReceiving]() {
-                    stopReceiving = true;
-                    if (clientSocket) clientSocket->close();
+                // Ensure client socket is cleaned up when the application closes
+                mainWindow->on_close([localClientSocket]() mutable {
+                    if (localClientSocket) {
+                        localClientSocket->close();
+                        localClientSocket.reset();
+                    }
                     });
+
+                // Assign to the global clientSocket for use in other parts of the program
+                clientSocket = localClientSocket;
         }
         else {
             fl_alert("Failed to connect to the server. Please check the IP and try again.");

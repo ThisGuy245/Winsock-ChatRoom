@@ -2,24 +2,9 @@
 #include "HomePage.hpp"
 #include "LobbyPage.hpp"
 #include <FL/fl_ask.H> // For debugging alerts
+#include <memory>
 
-// Timer tick callback to update the LobbyPage
-void MainWindow::onTick(void* userdata) {
-    printf("Tick\n");
 
-    if (lobbyPage && lobbyPage->visible()) {
-        // Uncomment this line if you need to update lobbyPage periodically
-        // lobbyPage->Update();
-    }
-
-    // Reschedule the timer for the next tick
-    Fl::repeat_timeout(1.0, [](void* userdata) {
-        auto* window = static_cast<MainWindow*>(userdata);
-        if (window) {
-            window->onTick(userdata);
-        }
-        }, userdata);
-}
 
 MainWindow::MainWindow(int width, int height)
     : Fl_Window(width, height), homePage(nullptr), lobbyPage(nullptr), timer(1.0) {
@@ -34,7 +19,7 @@ MainWindow::MainWindow(int width, int height)
     homePage->show();
 
     // Initialize lobbyPage
-    lobbyPage = new LobbyPage(0, 0, width, height);
+    this->lobbyPage = new LobbyPage(0, 0, width, height);
     if (!lobbyPage) {
         fl_alert("Failed to create LobbyPage!");
         return;
@@ -51,6 +36,7 @@ MainWindow::MainWindow(int width, int height)
 
     timer.setUserData(this);
     timer.start();
+
 }
 
 // Destructor: Cleans up dynamically allocated pages
@@ -61,6 +47,23 @@ MainWindow::~MainWindow() {
 
     // Execute cleanup logic
     close();
+}
+
+// Timer tick callback to update the LobbyPage
+void MainWindow::onTick(void* userdata) {
+    printf("Tick\n");
+    if (lobbyPage && lobbyPage->visible()) {
+        // Uncomment this line if you need to update lobbyPage periodically
+        // lobbyPage->Update();
+    }
+
+    // Reschedule the timer for the next tick
+    Fl::repeat_timeout(1.0, [](void* userdata) {
+        auto* window = static_cast<MainWindow*>(userdata);
+        if (window) {
+            window->onTick(userdata);
+        }
+        }, userdata);
 }
 
 // Getter: Returns the LobbyPage instance
