@@ -47,7 +47,7 @@ void LobbyPage::setServerSocket(std::shared_ptr<ServerSocket> server, const std:
     localUsername = username;
     connectionStatusBox->label("Connected as Host");
     addPlayer(localUsername);
-    broadcastMessage(localUsername + " has hosted the chat.", nullptr);
+    broadcastMessage(localUsername + " has joined the chat.", nullptr);
     broadcastUserList();
 }
 
@@ -56,8 +56,7 @@ void LobbyPage::setClientSocket(std::shared_ptr<ClientSocket> client, const std:
     localUsername = username;
     connectionStatusBox->label("Connected as Client");
     addPlayer(localUsername);
-    broadcastMessage(localUsername + " has hosted the chat.", nullptr);
-    broadcastUserList();
+    clientSocket->send(localUsername + " has joined the chat.");
 }
 
 void LobbyPage::Update() {
@@ -80,7 +79,6 @@ void LobbyPage::handleServerUpdates() {
         std::string message;
         if (client->receive(message)) {
             broadcastMessage(message, client);
-            addChatMessage(message);
         }
     }
 }
@@ -88,7 +86,12 @@ void LobbyPage::handleServerUpdates() {
 void LobbyPage::handleClientUpdates() {
     std::string message;
     while (clientSocket->receive(message)) {
-        addChatMessage(message);
+        if (message.compare(0, 8, "Players:") == 0) {
+            updatePlayerListFromMessage(message);
+        }
+        else {
+            addChatMessage(message);
+        }
     }
 }
 
@@ -100,7 +103,9 @@ void LobbyPage::broadcastMessage(const std::string& message, std::shared_ptr<Cli
             }
         }
     }
-    //addChatMessage(message); // Display locally
+    if (!sender) { // Only display if the host originated the message
+        addChatMessage(message);
+    }
 }
 
 void LobbyPage::broadcastUserList() {
@@ -115,8 +120,10 @@ void LobbyPage::broadcastUserList() {
 }
 
 void LobbyPage::addPlayer(const std::string& playerName) {
-    players.push_back(playerName);
-    updatePlayerList();
+    if (std::find(players.begin(), players.end(), playerName) == players.end()) {
+        players.push_back(playerName);
+        updatePlayerList();
+    }
 }
 
 void LobbyPage::updatePlayerList() {
@@ -125,6 +132,18 @@ void LobbyPage::updatePlayerList() {
         playerText += player + "\n";
     }
     playerSidebar->copy_label(playerText.c_str());
+}
+
+void LobbyPage::updatePlayerListFromMessage(const std::string& message) {
+    players.clear();
+    std::istringstream stream(message.substr(9)); // Skip "Players:\n"
+    std::string player;
+    while (std::getline(stream, player)) {
+        if (!player.empty()) {
+            players.push_back(player);
+        }
+    }
+    updatePlayerList();
 }
 
 void LobbyPage::addChatMessage(const std::string& message) {
@@ -138,16 +157,12 @@ void LobbyPage::send_button_callback(Fl_Widget* widget, void* userdata) {
     const char* text = lobbyPage->inputBox->value();
     if (text && text[0] != '\0') {
         std::string message = lobbyPage->localUsername + ": " + text;
-        lobbyPage->addChatMessage(message);
-
         if (lobbyPage->serverSocket) {
             lobbyPage->broadcastMessage(message, nullptr);
         }
         else if (lobbyPage->clientSocket) {
-            lobbyPage->broadcastMessage(message, nullptr);
-            //lobbyPage->clientSocket->send(message);
+            lobbyPage->clientSocket->send(message);
         }
-
         lobbyPage->inputBox->value("");
     }
 }

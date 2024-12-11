@@ -202,17 +202,6 @@ void HomePage::join_button_callback(Fl_Widget* widget, void* userdata) {
             // Pass the client socket and username to the lobby
             lobbyPage->setClientSocket(localClientSocket, username);
 
-            // Start receiving messages in a separate thread
-            std::thread([localClientSocket, lobbyPage]() {
-                std::string message;
-                while (localClientSocket->receive(message)) {
-                    Fl::lock();
-                    lobbyPage->addChatMessage(message);
-                    Fl::unlock();
-                    Fl::awake();
-                }
-                }).detach();
-
                 // Ensure client socket is cleaned up when the application closes
                 mainWindow->on_close([localClientSocket]() mutable {
                     if (localClientSocket) {
