@@ -15,7 +15,7 @@ struct ServerSocket {
     std::vector<std::shared_ptr<ClientSocket>>& getClients(); // Get the list of connected clients
     void addClient(std::shared_ptr<ClientSocket> client); // Add a new client to the list
     void removeClient(std::shared_ptr<ClientSocket> client); // Remove a client from the list
-    void broadcastMessage(const std::string& message);
+    void broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> sender);
     void broadcastUserList();
 
     void setUsername(const std::string& username) {

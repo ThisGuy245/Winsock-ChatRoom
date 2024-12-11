@@ -51,7 +51,6 @@ MainWindow::~MainWindow() {
 
 // Timer tick callback to update the LobbyPage
 void MainWindow::onTick(void* userdata) {
-    printf("Tick\n");
     if (lobbyPage && lobbyPage->visible()) {
         // Uncomment this line if you need to update lobbyPage periodically
         // lobbyPage->Update();

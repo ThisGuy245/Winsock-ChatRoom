@@ -26,10 +26,10 @@ public:
 private:
     static void send_button_callback(Fl_Widget* widget, void* userdata);
 
-    void broadcastMessage(const std::string& message);
+    void broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> sender);
+    void broadcastUserList();
     void addPlayer(const std::string& playerName);
     void updatePlayerList();
-    
 
     std::shared_ptr<ChatData> chatData;
     std::shared_ptr<ServerSocket> serverSocket;

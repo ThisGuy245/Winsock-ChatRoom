@@ -86,17 +86,22 @@ void ServerSocket::removeClient(std::shared_ptr<ClientSocket> client) {
 }
 
 // Broadcast a message to all clients
-void ServerSocket::broadcastMessage(const std::string& message) {
+void ServerSocket::broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> sender) {
     for (auto& client : m_clients) {
-        client->send(message);
+        if (client != sender) { // Avoid sending the message back to the sender
+            client->send(message);
+        }
     }
 }
 
+
 // Broadcast the list of usernames
 void ServerSocket::broadcastUserList() {
-    std::string userList = "Users in the lobby:\n";
-    for (auto& client : m_clients) {
+    std::string userList = "Players:\n";
+    for (const auto& client : m_clients) {
         userList += client->getUsername() + "\n";
     }
-    broadcastMessage(userList);
+    for (auto& client : m_clients) {
+        client->send(userList);
+    }
 }

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 LobbyPage::LobbyPage(int x, int y, int w, int h)
     : Fl_Group(x, y, w, h), chatDisplay(nullptr), chatBuffer(nullptr), inputBox(nullptr) {
@@ -58,15 +59,10 @@ LobbyPage::LobbyPage(int x, int y, int w, int h)
 void LobbyPage::setServerSocket(std::shared_ptr<ServerSocket> server, const std::string& username) {
     serverSocket = server;
     localUsername = username;
-
-    // Add host to the player list
     addPlayer(localUsername);
-
-    // Notify others that the host has joined
     std::string joinMessage = localUsername + " joined the chat.";
-    broadcastMessage(joinMessage);
-
-    // Handle new clients and messages via Update()
+    broadcastMessage(joinMessage, nullptr);  // Broadcast as a regular client message, no specific sender
+    broadcastUserList();
 }
 
 void LobbyPage::setClientSocket(std::shared_ptr<ClientSocket> client, const std::string& username) {
@@ -94,20 +90,20 @@ void LobbyPage::Update() {
         auto newClient = serverSocket->accept();
         if (newClient) {
             serverSocket->addClient(newClient);
-            addPlayer("New Client"); // Adjusted logic will sync username
+            addPlayer(newClient->getUsername()); // Sync username
+            broadcastUserList();
         }
 
         // Receive and broadcast messages
         for (auto& client : serverSocket->getClients()) {
             std::string message;
             if (client->receive(message)) {
-                chatData->addMessage("Unknown", message); // Adjust logic to include usernames
-                broadcastMessage(message);
-                addChatMessage(message);
+                chatData->addMessage(client->getUsername(), message); // Include usernames
+                broadcastMessage(message, client);
+                addChatMessage(client->getUsername() + ": " + message);
             }
         }
     }
-
     // Client-side logic
     if (clientSocket) {
         std::string message;
@@ -117,11 +113,25 @@ void LobbyPage::Update() {
     }
 }
 
-void LobbyPage::broadcastMessage(const std::string& message) {
+void LobbyPage::broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> sender) {
     if (serverSocket) {
         for (const auto& client : serverSocket->getClients()) {
-            client->send(message);
+            // Only send messages to clients if they are not the sender.
+            if (!sender || client != sender) {
+                client->send(message);
+            }
         }
+    }
+}
+
+void LobbyPage::broadcastUserList() {
+    if (serverSocket) {
+        std::string userList = "Users in the lobby:\n";
+        for (const auto& client : serverSocket->getClients()) {
+            userList += client->getUsername() + "\n";
+        }
+        userList += localUsername + "\n";
+        broadcastMessage(userList, nullptr);
     }
 }
 
@@ -152,7 +162,12 @@ void LobbyPage::send_button_callback(Fl_Widget* widget, void* userdata) {
         std::string formattedMessage = lobbyPage->localUsername + ": " + message;
         lobbyPage->chatData->addMessage(lobbyPage->localUsername, message);
         lobbyPage->addChatMessage(formattedMessage);
-        lobbyPage->broadcastMessage(formattedMessage);
+        if (lobbyPage->clientSocket) {
+            lobbyPage->clientSocket->send(formattedMessage);
+        }
+        else if (lobbyPage->serverSocket) {
+            lobbyPage->broadcastMessage(formattedMessage, nullptr); // Message from host as a client
+        }
         lobbyPage->inputBox->value(""); // Clear input box
     }
 }
