@@ -17,7 +17,6 @@ void ChatData::load(const std::string& filename) {
     for (pugi::xml_node userNode : usersNode.children("user")) {
         User user;
         user.name = userNode.attribute("name").value();
-        user.last_login = userNode.attribute("last_login").value();
         users.push_back(user);
     }
 
@@ -26,7 +25,6 @@ void ChatData::load(const std::string& filename) {
     for (pugi::xml_node messageNode : messagesNode.children("message")) {
         Message msg;
         msg.user = messageNode.attribute("user").value();
-        msg.time = messageNode.attribute("time").value();
         msg.content = messageNode.child_value();
         messages.push_back(msg);
     }
@@ -44,7 +42,6 @@ void ChatData::save(const std::string& filename) {
     for (const auto& user : users) {
         pugi::xml_node userNode = usersNode.append_child("user");
         userNode.append_attribute("name") = user.name.c_str();
-        userNode.append_attribute("last_login") = user.last_login.c_str();
     }
 
     // Add messages
@@ -52,7 +49,6 @@ void ChatData::save(const std::string& filename) {
     for (const auto& msg : messages) {
         pugi::xml_node messageNode = messagesNode.append_child("message");
         messageNode.append_attribute("user") = msg.user.c_str();
-        messageNode.append_attribute("time") = msg.time.c_str();
         messageNode.append_child(pugi::node_pcdata).set_value(msg.content.c_str());
     }
 
@@ -64,9 +60,13 @@ void ChatData::save(const std::string& filename) {
 
 // Add a new user to the data
 void ChatData::addUser(const std::string& username) {
+    for (const auto& user : users) {
+        if (user.name == username) {
+            return; // User already exists
+        }
+    }
     User user;
     user.name = username;
-    user.last_login = "2024-12-10";  // Example date, could use current time here
     users.push_back(user);
 }
 
@@ -74,7 +74,6 @@ void ChatData::addUser(const std::string& username) {
 void ChatData::addMessage(const std::string& user, const std::string& content) {
     Message msg;
     msg.user = user;
-    msg.time = "2024-12-10T12:10:00";  // Example timestamp, use current time in your application
     msg.content = content;
     messages.push_back(msg);
 }
@@ -83,11 +82,11 @@ void ChatData::addMessage(const std::string& user, const std::string& content) {
 void ChatData::printData() const {
     std::cout << "Users:\n";
     for (const auto& user : users) {
-        std::cout << "  Name: " << user.name << ", Last Login: " << user.last_login << std::endl;
+        std::cout << "  Name: " << user.name << std::endl;
     }
     std::cout << "\nMessages:\n";
     for (const auto& msg : messages) {
-        std::cout << "  User: " << msg.user << ", Time: " << msg.time << ", Message: " << msg.content << std::endl;
+        std::cout << "  User: " << msg.user << ", Message: " << msg.content << std::endl;
     }
 }
 

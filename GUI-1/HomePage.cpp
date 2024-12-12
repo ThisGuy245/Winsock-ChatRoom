@@ -81,6 +81,7 @@ void HomePage::login_button_callback(Fl_Widget* widget, void* userdata) {
 std::shared_ptr<ServerSocket> serverSocket;
 std::shared_ptr<ClientSocket> clientSocket;
 
+// Modified host button callback to allow the host to act as a client after hosting
 void HomePage::host_button_callback(Fl_Widget* widget, void* userdata) {
     auto* homePage = static_cast<HomePage*>(userdata);
     if (!homePage) {
@@ -117,7 +118,7 @@ void HomePage::host_button_callback(Fl_Widget* widget, void* userdata) {
         }
 
         // Pass the server socket and username to the lobby
-        lobbyPage->setServerSocket(serverSocket, username);
+        lobbyPage->initializeServer(serverSocket, username);
 
         // Start accepting connections in a separate thread
         std::thread([serverSocket, lobbyPage]() {
@@ -126,7 +127,7 @@ void HomePage::host_button_callback(Fl_Widget* widget, void* userdata) {
                     auto newClient = serverSocket->accept();
                     if (newClient) {
                         serverSocket->addClient(newClient);
-                        // You can update the lobby page with the new client if needed
+                        lobbyPage->updateConnectedUsers();  // Update user list when new client connects
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Avoid busy-waiting
                 }
@@ -142,11 +143,19 @@ void HomePage::host_button_callback(Fl_Widget* widget, void* userdata) {
                     serverSocket.reset();
                 }
                 });
+
+            // Make the host also act as a client
+            auto localClientSocket = std::make_shared<ClientSocket>();
+            if (localClientSocket->ConnectToServer("127.0.0.1", 8080)) {
+                localClientSocket->setUsername(username);
+                lobbyPage->initializeClient(localClientSocket, username);
+            }
     }
     catch (const std::exception& e) {
         fl_alert(("Error starting server: " + std::string(e.what())).c_str());
     }
 }
+
 
 
 

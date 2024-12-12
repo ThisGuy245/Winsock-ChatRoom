@@ -19,6 +19,8 @@ public:
     bool ConnectToServer(const std::string& address, int port);
     bool isConnected() const;
 
+    void receiveUserList(std::string& message);
+
     // Receive a message from the socket
     bool receive(std::string& message);
 

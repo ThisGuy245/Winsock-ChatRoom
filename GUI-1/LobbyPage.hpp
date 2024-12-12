@@ -1,48 +1,56 @@
-#ifndef LOBBY_PAGE_HPP
-#define LOBBY_PAGE_HPP
+#ifndef LOBBYPAGE_HPP
+#define LOBBYPAGE_HPP
 
 #include <FL/Fl_Group.H>
+#include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Display.H>
-#include <FL/Fl_Box.H>
 #include <FL/Fl_Input.H>
-#include <FL/Fl_Button.H>
-#include <string>
 #include <vector>
+#include <string>
 #include <memory>
-
-#include "ServerSocket.h"
-#include "ClientSocket.h"
+#include "ClientSocket.h"  // Include ClientSocket class definition if not included already
+#include "ServerSocket.h"  // Include ServerSocket class definition if not included already
 
 class LobbyPage : public Fl_Group {
-private:
-    Fl_Text_Display* chatDisplay;
-    Fl_Text_Buffer* chatBuffer;
-    Fl_Box* connectionStatusBox;
-    Fl_Box* playerSidebar;
-    Fl_Input* inputBox;
-
-    std::shared_ptr<ServerSocket> serverSocket;
-    std::shared_ptr<ClientSocket> clientSocket;
-
-    std::string localUsername;
-    std::vector<std::string> players;
-
-    void handleServerUpdates();
-    void handleClientUpdates();
-    void broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> sender);
-    void broadcastUserList();
-    void updatePlayerList();
-    void updatePlayerListFromMessage(const std::string& message);
-    void addChatMessage(const std::string& message);
-    static void send_button_callback(Fl_Widget* widget, void* userdata);
-
 public:
+    // Constructor
     LobbyPage(int x, int y, int w, int h);
 
-    void setServerSocket(std::shared_ptr<ServerSocket> server, const std::string& username);
-    void setClientSocket(std::shared_ptr<ClientSocket> client, const std::string& username);
+    // Update function called periodically for client-server communication
     void Update();
-    void addPlayer(const std::string& playerName);
+
+    // Initialize the server-side settings
+    void initializeServer(std::shared_ptr<ServerSocket> server, const std::string& username);
+    void updateConnectedUsers();
+    // Initialize the client-side settings
+    void initializeClient(std::shared_ptr<ClientSocket> client, const std::string& username);
+
+private:
+    // Helper functions for managing server-client communication
+    void processServerUpdates();
+    void processClientUpdates();
+    void sendMessageToAll(const std::string& message, std::shared_ptr<ClientSocket> sender = nullptr);
+    void updateConnectedUsers();
+    void sendUserList();
+    void refreshUserList(const std::string& message);
+    void appendChatMessage(const std::string& message);
+    void applyStyling();
+
+    // Callback function for sending messages
+    static void sendMessageCallback(Fl_Widget* widget, void* userdata);
+
+    // UI components
+    Fl_Text_Display* chatDisplay;
+    Fl_Text_Buffer* chatBuffer;
+    Fl_Text_Display* userListDisplay;
+    Fl_Text_Buffer* userListBuffer;
+    Fl_Input* inputBox;
+
+    // Networking components
+    std::shared_ptr<ClientSocket> clientSocket;
+    std::shared_ptr<ServerSocket> serverSocket;
+    std::vector<std::string> players;
+    std::string localUsername;
 };
 
-#endif // LOBBY_PAGE_HPP
+#endif // LOBBYPAGE_HPP

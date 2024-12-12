@@ -2,6 +2,8 @@
 #include "ClientSocket.h"
 #include <stdexcept>
 #include <vector>
+#include "LobbyPage.hpp"
+
 
 // Constructor
 ClientSocket::ClientSocket()
@@ -89,4 +91,12 @@ void ClientSocket::setUsername(const std::string& username) {
 bool ClientSocket::isConnected() const { 
     // Check if the socket is valid and not closed 
     return m_socket != INVALID_SOCKET && !m_closed; 
+}
+
+// Add this method to handle user list updates sent by the server
+void ClientSocket::receiveUserList(std::string& message) {
+    if (message.compare(0, 8, "Players:") == 0) {
+        // Process and display the user list
+        lobbyPage->refreshUserList(message);
+    }
 }

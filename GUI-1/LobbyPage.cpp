@@ -1,140 +1,136 @@
 #include "LobbyPage.hpp"
-#include <FL/Fl_Text_Display.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Input.H>
 #include <FL/Fl_Box.H>
-#include <string>
+#include <FL/Fl_Scroll.H>
 #include <sstream>
-#include <stdexcept>
 #include <algorithm>
 #include <iostream>
 
 LobbyPage::LobbyPage(int x, int y, int w, int h)
-    : Fl_Group(x, y, w, h), chatDisplay(nullptr), chatBuffer(nullptr), inputBox(nullptr) {
-    // Create UI elements
-    Fl_Box* navBar = new Fl_Box(x, y, w, 50, "");
-    navBar->box(FL_FLAT_BOX);
-    navBar->color(FL_BLUE);
+    : Fl_Group(x, y, w, h), chatDisplay(nullptr), chatBuffer(nullptr), userListDisplay(nullptr), userListBuffer(nullptr), inputBox(nullptr) {
+    // Sidebar for user list
+    userListBuffer = new Fl_Text_Buffer();
+    userListDisplay = new Fl_Text_Display(x, y, 200, h);
+    userListDisplay->box(FL_UP_BOX);
+    userListDisplay->buffer(userListBuffer);
+    userListDisplay->labelsize(14);
+    userListDisplay->textsize(12);
 
-    Fl_Box* titleBox = new Fl_Box(x + 10, y + 10, 200, 30, "Lobby Page");
-    titleBox->labelsize(18);
-    titleBox->align(FL_ALIGN_CENTER);
-
-    connectionStatusBox = new Fl_Box(x + w - 150, y + 10, 140, 30, "Disconnected");
-    connectionStatusBox->labelsize(14);
-    connectionStatusBox->align(FL_ALIGN_CENTER);
-
-    playerSidebar = new Fl_Box(x, y + 50, 200, h - 100, "Players:\n");
-    playerSidebar->box(FL_UP_BOX);
-    playerSidebar->align(FL_ALIGN_TOP_LEFT | FL_ALIGN_INSIDE);
-
+    // Chat display
     chatBuffer = new Fl_Text_Buffer();
-    chatDisplay = new Fl_Text_Display(x + 220, y + 60, w - 240, h - 150);
+    chatDisplay = new Fl_Text_Display(x + 210, y, w - 220, h - 60);
     chatDisplay->box(FL_BORDER_BOX);
     chatDisplay->buffer(chatBuffer);
+    chatDisplay->textsize(12);
 
-    inputBox = new Fl_Input(x + 220, y + h - 90, w - 320, 30, "Message:");
-    inputBox->align(FL_ALIGN_TOP);
+    // Input box
+    inputBox = new Fl_Input(x + 210, y + h - 50, w - 300, 30, "Message:");
 
-    Fl_Button* sendButton = new Fl_Button(x + w - 100, y + h - 90, 80, 30, "Send");
-    sendButton->callback(send_button_callback, this);
+    // Send button
+    Fl_Button* sendButton = new Fl_Button(x + w - 80, y + h - 50, 70, 30, "Send");
+    sendButton->callback(sendMessageCallback, this);
 
-    end(); // End FLTK group
+    end();
+    applyStyling();
 }
 
-void LobbyPage::setServerSocket(std::shared_ptr<ServerSocket> server, const std::string& username) {
-    serverSocket = server;
-    localUsername = username;
-    connectionStatusBox->label("Connected as Host");
-    addPlayer(localUsername);
-    broadcastMessage(localUsername + " has joined the chat.", nullptr);
-    broadcastUserList();
-}
-
-void LobbyPage::setClientSocket(std::shared_ptr<ClientSocket> client, const std::string& username) {
-    clientSocket = client;
-    localUsername = username;
-    connectionStatusBox->label("Connected as Client");
-    addPlayer(localUsername);
-    clientSocket->send(localUsername + " has joined the chat.");
+void LobbyPage::applyStyling() {
+    userListDisplay->color(FL_LIGHT3);
+    chatDisplay->color(FL_WHITE);
+    inputBox->color(FL_WHITE);
 }
 
 void LobbyPage::Update() {
     if (serverSocket) {
-        handleServerUpdates();
+        processServerUpdates();
     }
     if (clientSocket) {
-        handleClientUpdates();
+        processClientUpdates();
     }
 }
 
-void LobbyPage::handleServerUpdates() {
+void LobbyPage::processServerUpdates() {
     auto newClient = serverSocket->accept();
     if (newClient) {
         serverSocket->addClient(newClient);
-        broadcastUserList();
+        updateConnectedUsers();
     }
 
     for (auto& client : serverSocket->getClients()) {
         std::string message;
         if (client->receive(message)) {
-            broadcastMessage(message, client);
+            sendMessageToAll(message, client);
         }
     }
 }
 
-void LobbyPage::handleClientUpdates() {
+void LobbyPage::processClientUpdates() {
     std::string message;
     while (clientSocket->receive(message)) {
         if (message.compare(0, 8, "Players:") == 0) {
-            updatePlayerListFromMessage(message);
+            refreshUserList(message);
         }
         else {
-            addChatMessage(message);
+            appendChatMessage(message);
         }
     }
 }
 
-void LobbyPage::broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> sender) {
+void LobbyPage::sendMessageToAll(const std::string& message, std::shared_ptr<ClientSocket> sender) {
     if (serverSocket) {
         for (const auto& client : serverSocket->getClients()) {
             if (client != sender) {
                 client->send(message);
             }
         }
+        appendChatMessage(message);
     }
-    if (!sender) { // Only display if the host originated the message
-        addChatMessage(message);
+    if (clientSocket) {
+        clientSocket->send(message);
     }
 }
 
-void LobbyPage::broadcastUserList() {
+void LobbyPage::initializeServer(std::shared_ptr<ServerSocket> server, const std::string& username) {
+    serverSocket = server;
+    localUsername = username;
+    players.push_back(username);
+    updateConnectedUsers();
+    sendMessageToAll(username + " has joined the chat.");
+}
+
+void LobbyPage::initializeClient(std::shared_ptr<ClientSocket> client, const std::string& username) {
+    clientSocket = client;
+    localUsername = username;
+    appendChatMessage("Connected to the server as " + username + ".");
+    clientSocket->send(username + " has joined the chat.");
+    sendUserList();  // Send the updated user list to the server (and other clients)
+}
+
+void LobbyPage::updateConnectedUsers() {
+    std::string userList = "Players:\n";
+    for (const auto& client : serverSocket->getClients()) {
+        userList += client->getUsername() + "\n";
+    }
+    userList += localUsername + "\n";
+    sendMessageToAll(userList);
+    userListBuffer->text(userList.c_str());  // Update the user list in the UI
+}
+
+void LobbyPage::sendUserList() {
+    std::string userList = "Players:\n";
     if (serverSocket) {
-        std::string userList = "Players:\n";
         for (const auto& client : serverSocket->getClients()) {
             userList += client->getUsername() + "\n";
         }
-        userList += localUsername + "\n";
-        broadcastMessage(userList, nullptr);
+    }
+    userList += localUsername + "\n";
+    if (clientSocket) {
+        clientSocket->send(userList);
     }
 }
 
-void LobbyPage::addPlayer(const std::string& playerName) {
-    if (std::find(players.begin(), players.end(), playerName) == players.end()) {
-        players.push_back(playerName);
-        updatePlayerList();
-    }
-}
-
-void LobbyPage::updatePlayerList() {
-    std::string playerText = "Players:\n";
-    for (const auto& player : players) {
-        playerText += player + "\n";
-    }
-    playerSidebar->copy_label(playerText.c_str());
-}
-
-void LobbyPage::updatePlayerListFromMessage(const std::string& message) {
+// Update user list based on messages from other clients
+void LobbyPage::refreshUserList(const std::string& message) {
     players.clear();
     std::istringstream stream(message.substr(9)); // Skip "Players:\n"
     std::string player;
@@ -143,22 +139,37 @@ void LobbyPage::updatePlayerListFromMessage(const std::string& message) {
             players.push_back(player);
         }
     }
-    updatePlayerList();
+    userListBuffer->text(message.substr(9).c_str());  // Update the side panel
 }
 
-void LobbyPage::addChatMessage(const std::string& message) {
+
+// Update user list based on messages from other clients
+void LobbyPage::refreshUserList(const std::string& message) {
+    players.clear();
+    std::istringstream stream(message.substr(9)); // Skip "Players:\n"
+    std::string player;
+    while (std::getline(stream, player)) {
+        if (!player.empty()) {
+            players.push_back(player);
+        }
+    }
+    userListBuffer->text(message.substr(9).c_str());  // Update the side panel
+}
+
+
+void LobbyPage::appendChatMessage(const std::string& message) {
     if (chatBuffer) {
         chatBuffer->append((message + "\n").c_str());
     }
 }
 
-void LobbyPage::send_button_callback(Fl_Widget* widget, void* userdata) {
+void LobbyPage::sendMessageCallback(Fl_Widget* widget, void* userdata) {
     auto* lobbyPage = static_cast<LobbyPage*>(userdata);
     const char* text = lobbyPage->inputBox->value();
     if (text && text[0] != '\0') {
         std::string message = lobbyPage->localUsername + ": " + text;
         if (lobbyPage->serverSocket) {
-            lobbyPage->broadcastMessage(message, nullptr);
+            lobbyPage->sendMessageToAll(message);
         }
         else if (lobbyPage->clientSocket) {
             lobbyPage->clientSocket->send(message);

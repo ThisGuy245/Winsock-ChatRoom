@@ -75,10 +75,22 @@ std::vector<std::shared_ptr<ClientSocket>>& ServerSocket::getClients() {
     return m_clients;
 }
 
-// Add a new client to the list
+
+void ServerSocket::broadcastUserList() {
+    std::string userList = "Players:\n";
+    for (const auto& client : m_clients) {
+        userList += client->getUsername() + "\n";
+    }
+    for (auto& client : m_clients) {
+        client->send(userList);  // Send the updated list to all clients
+    }
+}
+
 void ServerSocket::addClient(std::shared_ptr<ClientSocket> client) {
     m_clients.push_back(client);
+    broadcastUserList();  // Notify all clients about the new user
 }
+
 
 // Remove a client from the list
 void ServerSocket::removeClient(std::shared_ptr<ClientSocket> client) {
@@ -91,17 +103,5 @@ void ServerSocket::broadcastMessage(const std::string& message, std::shared_ptr<
         if (client != sender) { // Avoid sending the message back to the sender
             client->send(message);
         }
-    }
-}
-
-
-// Broadcast the list of usernames
-void ServerSocket::broadcastUserList() {
-    std::string userList = "Players:\n";
-    for (const auto& client : m_clients) {
-        userList += client->getUsername() + "\n";
-    }
-    for (auto& client : m_clients) {
-        client->send(userList);
     }
 }
