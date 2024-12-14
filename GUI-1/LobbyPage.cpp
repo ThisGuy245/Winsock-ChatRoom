@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iostream>
+#include <mutex>
 
 LobbyPage::LobbyPage(int x, int y, int w, int h)
     : Fl_Group(x, y, w, h), chatDisplay(nullptr), chatBuffer(nullptr), userListDisplay(nullptr), userListBuffer(nullptr), inputBox(nullptr) {
@@ -62,10 +63,21 @@ void LobbyPage::processServerUpdates() {
             sendMessageToAll(message, client);
         }
     }
+
+    // Handle disconnections
+    for (auto it = serverSocket->getClients().begin(); it != serverSocket->getClients().end();) {
+        if (!(*it)->isConnected()) {
+            it = serverSocket->getClients().erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
 }
 
 void LobbyPage::processClientUpdates() {
     std::string message;
+    std::lock_guard<std::mutex> lock(messageMutex);
     while (clientSocket->receive(message)) {
         if (message.compare(0, 8, "Players:") == 0) {
             refreshUserList(message);
@@ -85,7 +97,7 @@ void LobbyPage::sendMessageToAll(const std::string& message, std::shared_ptr<Cli
         }
         appendChatMessage(message);
     }
-    if (clientSocket) {
+    else if (clientSocket) {
         clientSocket->send(message);
     }
 }
@@ -103,33 +115,20 @@ void LobbyPage::initializeClient(std::shared_ptr<ClientSocket> client, const std
     localUsername = username;
     appendChatMessage("Connected to the server as " + username + ".");
     clientSocket->send(username + " has joined the chat.");
-    sendUserList();  // Send the updated user list to the server (and other clients)
 }
 
 void LobbyPage::updateConnectedUsers() {
+    if (!serverSocket) return;
+
     std::string userList = "Players:\n";
     for (const auto& client : serverSocket->getClients()) {
         userList += client->getUsername() + "\n";
     }
     userList += localUsername + "\n";
     sendMessageToAll(userList);
-    userListBuffer->text(userList.c_str());  // Update the user list in the UI
+    userListBuffer->text(userList.c_str());
 }
 
-void LobbyPage::sendUserList() {
-    std::string userList = "Players:\n";
-    if (serverSocket) {
-        for (const auto& client : serverSocket->getClients()) {
-            userList += client->getUsername() + "\n";
-        }
-    }
-    userList += localUsername + "\n";
-    if (clientSocket) {
-        clientSocket->send(userList);
-    }
-}
-
-// Update user list based on messages from other clients
 void LobbyPage::refreshUserList(const std::string& message) {
     players.clear();
     std::istringstream stream(message.substr(9)); // Skip "Players:\n"
@@ -139,27 +138,16 @@ void LobbyPage::refreshUserList(const std::string& message) {
             players.push_back(player);
         }
     }
-    userListBuffer->text(message.substr(9).c_str());  // Update the side panel
+    userListBuffer->text(message.substr(9).c_str());
 }
-
-
-// Update user list based on messages from other clients
-void LobbyPage::refreshUserList(const std::string& message) {
-    players.clear();
-    std::istringstream stream(message.substr(9)); // Skip "Players:\n"
-    std::string player;
-    while (std::getline(stream, player)) {
-        if (!player.empty()) {
-            players.push_back(player);
-        }
-    }
-    userListBuffer->text(message.substr(9).c_str());  // Update the side panel
-}
-
 
 void LobbyPage::appendChatMessage(const std::string& message) {
+    const int MAX_MESSAGES = 1000;  // Limit messages in the buffer
     if (chatBuffer) {
         chatBuffer->append((message + "\n").c_str());
+        if (chatBuffer->length() > MAX_MESSAGES * 100) {  // Approximation for size limit
+            chatBuffer->remove(0, chatBuffer->length() - MAX_MESSAGES * 100);
+        }
     }
 }
 

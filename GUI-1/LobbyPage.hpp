@@ -30,11 +30,11 @@ private:
     void processServerUpdates();
     void processClientUpdates();
     void sendMessageToAll(const std::string& message, std::shared_ptr<ClientSocket> sender = nullptr);
-    void updateConnectedUsers();
     void sendUserList();
     void refreshUserList(const std::string& message);
     void appendChatMessage(const std::string& message);
     void applyStyling();
+    void setClientSocket(localClientSocket, username);
 
     // Callback function for sending messages
     static void sendMessageCallback(Fl_Widget* widget, void* userdata);
