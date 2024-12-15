@@ -4,10 +4,8 @@
 #include <FL/fl_ask.H> // For debugging alerts
 #include <memory>
 
-
-
 MainWindow::MainWindow(int width, int height)
-    : Fl_Window(width, height), homePage(nullptr), lobbyPage(nullptr), timer(1.0) {
+    : Fl_Window(width, height), homePage(nullptr), lobbyPage(nullptr), timer(0.1) {
 
     // Initialize homePage
     homePage = new HomePage(0, 0, width, height, this);
@@ -36,7 +34,6 @@ MainWindow::MainWindow(int width, int height)
 
     timer.setUserData(this);
     timer.start();
-
 }
 
 // Destructor: Cleans up dynamically allocated pages
@@ -44,19 +41,15 @@ MainWindow::~MainWindow() {
     // Ensure all allocated pages are deleted
     delete homePage;
     delete lobbyPage;
-
-    // Execute cleanup logic
     close();
 }
 
 // Timer tick callback to update the LobbyPage
 void MainWindow::onTick(void* userdata) {
     if (lobbyPage && lobbyPage->visible()) {
-        // Uncomment this line if you need to update lobbyPage periodically
-        // lobbyPage->Update();
+        lobbyPage->Update();
     }
 
-    // Reschedule the timer for the next tick
     Fl::repeat_timeout(1.0, [](void* userdata) {
         auto* window = static_cast<MainWindow*>(userdata);
         if (window) {
@@ -100,6 +93,7 @@ void MainWindow::switch_to_lobby(Fl_Widget* widget, void* userdata) {
     }
     if (window->lobbyPage) {
         window->lobbyPage->show();
+        // Make sure client socket is set when switching to the lobby
     }
     else {
         fl_alert("lobbyPage is not initialized!");
