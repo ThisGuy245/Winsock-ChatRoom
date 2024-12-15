@@ -47,7 +47,9 @@ void HomePage::hostButtonCallback(Fl_Widget* widget, void* userdata) {
     const char* ip = homePage->ipInput->value();
     // Attempt to host a server
     try {
-        homePage->mainWindow->getLobbyPage()->hostServer(ip, username);
+        LobbyPage* lobbyPage = homePage->mainWindow->getLobbyPage();
+        lobbyPage->setUsername(username); // Set the username
+        lobbyPage->hostServer(ip, username);
         homePage->mainWindow->switch_to_lobby(widget, homePage->mainWindow);
     }
     catch (const std::runtime_error& e) {
@@ -73,13 +75,16 @@ void HomePage::joinButtonCallback(Fl_Widget* widget, void* userdata) {
 
     // Attempt to join the server
     try {
-        homePage->mainWindow->getLobbyPage()->joinServer(ip, username);
+        LobbyPage* lobbyPage = homePage->mainWindow->getLobbyPage();
+        lobbyPage->setUsername(username); // Set the username
+        lobbyPage->joinServer(ip, username);
         homePage->mainWindow->switch_to_lobby(widget, homePage->mainWindow);
     }
     catch (const std::runtime_error& e) {
         fl_alert("Failed to join server: %s", e.what());
     }
 }
+
 
 std::string HomePage::getLocalIPAddress() {
     char hostname[256];

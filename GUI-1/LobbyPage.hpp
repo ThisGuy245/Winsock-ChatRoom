@@ -23,6 +23,7 @@ public:
     void Update();  // Network update
     void sendMessage(const std::string& message);  // Send a message to the server
     void receiveMessages();  // Helper function to process received messages
+    void setUsername(const std::string& user) { username = user; }
 
 private:
     // Widgets
@@ -36,6 +37,8 @@ private:
     // Network connections
     ClientSocket* client;
     ServerSocket* server;
+
+    std::string username;
 
     // Callback for menu items
     static void menuCallback(Fl_Widget* widget, void* userdata);
