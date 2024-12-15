@@ -1,7 +1,7 @@
+// HomePage.cpp
 #include "HomePage.hpp"
 #include "MainWindow.h"
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Input.H>
+#include "LobbyPage.hpp"
 #include <FL/fl_ask.H>
 #include <stdexcept>
 #include <winsock2.h>
@@ -9,26 +9,22 @@
 #include <iostream>
 
 HomePage::HomePage(int X, int Y, int W, int H, MainWindow* parent)
-    : Fl_Group(X, Y, W, H), mainWindow(parent), usernameInput(nullptr), ipInput(nullptr), hostButton(nullptr), joinButton(nullptr) {
+    : Fl_Group(X, Y, W, H), mainWindow(parent) {
 
-    // Username input field
     usernameInput = new Fl_Input(W / 2 - 100, H / 2 - 60, 200, 30, "Username:");
     usernameInput->align(FL_ALIGN_TOP);
 
-    // IP address input field
     ipInput = new Fl_Input(W / 2 - 100, H / 2 - 10, 200, 30, "Server IP:");
     ipInput->align(FL_ALIGN_TOP);
     ipInput->value(getLocalIPAddress().c_str()); // Default to local IP
 
-    // Host button
     hostButton = new Fl_Button(W / 2 - 100, H / 2 + 40, 90, 30, "Host");
     hostButton->callback(hostButtonCallback, this);
 
-    // Join button
     joinButton = new Fl_Button(W / 2 + 10, H / 2 + 40, 90, 30, "Join");
     joinButton->callback(joinButtonCallback, this);
 
-    end(); // Finalize layout
+    end();  // Finalize the layout
 }
 
 HomePage::~HomePage() {
@@ -48,9 +44,10 @@ void HomePage::hostButtonCallback(Fl_Widget* widget, void* userdata) {
         return;
     }
 
+    const char* ip = homePage->ipInput->value();
     // Attempt to host a server
     try {
-        homePage->mainWindow->getLobbyPage()->hostServer();
+        homePage->mainWindow->getLobbyPage()->hostServer(ip, username);
         homePage->mainWindow->switch_to_lobby(widget, homePage->mainWindow);
     }
     catch (const std::runtime_error& e) {

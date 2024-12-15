@@ -1,35 +1,22 @@
-// ServerSocket.h
-#ifndef SERVER_SOCKET_H
-#define SERVER_SOCKET_H
-
 #include <winsock2.h>
-#include <ws2tcpip.h>
-#include <string>
-#include <vector>
 #include <memory>
+#include <vector>
+#include "ClientSocket.h"
 
-class ClientSocket;
+struct ServerSocket
+{
+	ServerSocket(int _port);
+	~ServerSocket();
 
-class ServerSocket {
+	std::shared_ptr<ClientSocket> accept();
+	void handleClientConnections();
+
 private:
-    SOCKET serverSocket;
-    std::string serverIP;
-    std::vector<std::shared_ptr<ClientSocket>> clients;
-    std::vector<std::string> usernames;
-    std::vector<std::string> getConnectedUsers() const {
-    
-    }
+	SOCKET m_socket;
+	bool m_closed;
+	ServerSocket(const ServerSocket& _copy);
+	ServerSocket& operator=(const ServerSocket& _assign);
+	bool receive(std::string& _message);
+	std::vector<std::shared_ptr<ClientSocket>> clients; //stores connected clients
 
-    void configureSocket(int port);
-    void retrieveHostIP();
-
-public:
-    explicit ServerSocket(int port);
-    ~ServerSocket();
-
-    std::shared_ptr<ClientSocket> acceptClient();
-    void manageClients();
-    std::string getServerIP() const;
 };
-
-#endif // SERVER_SOCKET_H

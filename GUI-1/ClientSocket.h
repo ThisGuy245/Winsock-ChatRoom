@@ -1,31 +1,29 @@
-#ifndef CLIENTSOCKET_H
-#define CLIENTSOCKET_H
-
-#include <string>
+#pragma once
 #include <winsock2.h>
-#include <ws2tcpip.h>
+#include <string>
+#include <memory>
+#include <stdexcept>
+#include <WS2tcpip.h>
 
-class ClientSocket {
-public:
-    // Constructor for server-side socket
-    explicit ClientSocket(SOCKET sock);
 
-    // Constructor for client-side connection
-    ClientSocket(const std::string& serverIP, int serverPort);
+struct ServerSocket;
 
-    // Destructor
-    ~ClientSocket();
+struct ClientSocket
+{
+	ClientSocket(SOCKET socket);
+	ClientSocket(const std::string& ipAddress, int port);
+	~ClientSocket();
 
-    // Public methods
-    void sendMessage(const std::string& tag, const std::string& message);
-    bool receiveMessage(std::string& tag, std::string& message);
-    bool isConnectionClosed() const;
+	bool receive(std::string& _message);
+	void send(const std::string& _message);
+	bool closed();
+
 
 private:
-    void configureSocket(const std::string& serverIP, int serverPort);
+	friend struct ServerSocket;
+	SOCKET m_socket;
+	bool m_closed;
+	ClientSocket(const ClientSocket& _copy);
+	ClientSocket& operator=(const ClientSocket& _assign);
 
-    SOCKET clientSocket; // Holds the socket for communication
-    bool closed;         // Tracks if the socket is closed
 };
-
-#endif

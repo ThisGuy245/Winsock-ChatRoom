@@ -1,86 +1,103 @@
 #include "ClientSocket.h"
-#include <stdexcept>
-#include <iostream>
-#include <sstream>
+#include "ServerSocket.h"
 
-ClientSocket::ClientSocket(SOCKET sock) : clientSocket(sock), closed(false) {
-    if (clientSocket == INVALID_SOCKET) {
-        throw std::runtime_error("Invalid socket.");
-    }
+//this is for already sockets
+ClientSocket::ClientSocket(SOCKET socket) : m_socket(socket), m_closed(false)
+{
+	if (socket == INVALID_SOCKET)
+	{
+		throw std::runtime_error("Invalid socket");
+	}
 }
 
-ClientSocket::ClientSocket(const std::string& serverIP, int serverPort) : clientSocket(INVALID_SOCKET), closed(false) {
-    configureSocket(serverIP, serverPort);
+//this is for new ClientSockets
+ClientSocket::ClientSocket(const std::string& ipAddress, int port) : m_socket(INVALID_SOCKET), m_closed(false)
+{
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	{
+		throw std::runtime_error("WSAStartup failed");
+	}
+
+	m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (m_socket == INVALID_SOCKET)
+	{
+		WSACleanup();
+		throw std::runtime_error("Failed to create socket");
+	}
+
+	sockaddr_in serverAddress;
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_port = htons(port);
+
+	//convert IP address using inet_pton
+	if (inet_pton(AF_INET, ipAddress.c_str(), &serverAddress.sin_addr) <= 0)
+	{
+		closesocket(m_socket);
+		WSACleanup();
+		throw std::runtime_error("Invalid address / Address not supported");
+	}
+
+	if (connect(m_socket, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress)) == SOCKET_ERROR)
+	{
+		closesocket(m_socket);
+		WSACleanup();
+		throw std::runtime_error("Failed to connect to server");
+	}
+
+	u_long mode = 1;
+
+	if (ioctlsocket(m_socket, FIONBIO, &mode) == SOCKET_ERROR)
+	{
+		throw std::runtime_error("Failed to set non-blocking");
+	}
+
+	printf("Connected to server at %s:%d\n", ipAddress.c_str(), port);
 }
 
-ClientSocket::~ClientSocket() {
-    closesocket(clientSocket);
+ClientSocket::~ClientSocket()
+{
+	if (m_socket != INVALID_SOCKET)
+	{
+		closesocket(m_socket);
+	}
 }
 
-void ClientSocket::configureSocket(const std::string& serverIP, int serverPort) {
-    clientSocket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (clientSocket == INVALID_SOCKET) {
-        throw std::runtime_error("Socket creation failed.");
-    }
-
-    sockaddr_in serverAddr = {};
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(serverPort);
-    inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr);
-
-    if (connect(clientSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
-        closesocket(clientSocket);
-        throw std::runtime_error("Failed to connect to server.");
-    }
-
-    u_long nonBlocking = 1;
-    if (ioctlsocket(clientSocket, FIONBIO, &nonBlocking) == SOCKET_ERROR) {
-        throw std::runtime_error("Failed to set non-blocking mode.");
-    }
+//to accept a message from client socket
+bool ClientSocket::receive(std::string& _message)
+{
+	char buffer[128] = { 0 };
+	int bytes = ::recv(m_socket, buffer, sizeof(buffer) - 1, 0);
+	if (bytes == SOCKET_ERROR)
+	{
+		if (WSAGetLastError() != WSAEWOULDBLOCK)
+		{
+			m_closed = true;
+			return false;
+			//throw std::runtime_error("Read failed");
+		}
+		return false;
+	}
+	else if (bytes == 0)
+	{
+		m_closed = true;
+		return false;
+	}
+	_message = buffer;
+	return true;
 }
 
-void ClientSocket::sendMessage(const std::string& tag, const std::string& message) {
-    if (this->closed) {
-        throw std::runtime_error("Cannot send message; connection closed.");
-    }
-
-    std::ostringstream formattedMessage;
-    formattedMessage << tag << ":" << message << "\n";
-
-    std::string toSend = formattedMessage.str();
-    int result = send(clientSocket, toSend.c_str(), static_cast<int>(toSend.size()), 0);
-    if (result == SOCKET_ERROR) {
-        throw std::runtime_error("Failed to send message.");
-    }
+//to send a message to client socket
+void ClientSocket::send(const std::string& _message)
+{
+	int bytes = ::send(m_socket, _message.c_str(), _message.length(), 0);
+	if (bytes <= 0)
+	{
+		throw std::runtime_error("Failed to send data");
+	}
 }
 
-bool ClientSocket::receiveMessage(std::string& tag, std::string& message) {
-    if (this->closed) return false;
-
-    char buffer[512];
-    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
-    if (bytesReceived == 0) {
-        this->closed = true;
-        return false;
-    }
-    if (bytesReceived == SOCKET_ERROR) {
-        if (WSAGetLastError() == WSAEWOULDBLOCK) return false;
-        throw std::runtime_error("Failed to receive message.");
-    }
-
-    buffer[bytesReceived] = '\0';
-    std::string receivedMessage(buffer);
-
-    size_t delimiter = receivedMessage.find(':');
-    if (delimiter != std::string::npos) {
-        tag = receivedMessage.substr(0, delimiter);
-        message = receivedMessage.substr(delimiter + 1);
-        return true;
-    }
-
-    return false;
-}
-
-bool ClientSocket::isConnectionClosed() const {
-    return this->closed;
+bool ClientSocket::closed()
+{
+	return m_closed;
 }
