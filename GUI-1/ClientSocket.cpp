@@ -1,102 +1,86 @@
-#include <ws2tcpip.h>
 #include "ClientSocket.h"
 #include <stdexcept>
-#include <vector>
-#include "LobbyPage.hpp"
+#include <iostream>
+#include <sstream>
 
-
-// Constructor
-ClientSocket::ClientSocket()
-    : m_socket(INVALID_SOCKET), m_closed(false), m_username("") {}
-
-// Constructor with existing socket
-ClientSocket::ClientSocket(SOCKET socket)
-    : m_socket(socket), m_closed(false), m_username("") {}
-
-// Destructor
-ClientSocket::~ClientSocket() {
-    close();
+ClientSocket::ClientSocket(SOCKET sock) : clientSocket(sock), closed(false) {
+    if (clientSocket == INVALID_SOCKET) {
+        throw std::runtime_error("Invalid socket.");
+    }
 }
 
-// Connect to a server
-bool ClientSocket::ConnectToServer(const std::string& address, int port) {
+ClientSocket::ClientSocket(const std::string& serverIP, int serverPort) : clientSocket(INVALID_SOCKET), closed(false) {
+    configureSocket(serverIP, serverPort);
+}
+
+ClientSocket::~ClientSocket() {
+    closesocket(clientSocket);
+}
+
+void ClientSocket::configureSocket(const std::string& serverIP, int serverPort) {
+    clientSocket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (clientSocket == INVALID_SOCKET) {
+        throw std::runtime_error("Socket creation failed.");
+    }
+
     sockaddr_in serverAddr = {};
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(port);
+    serverAddr.sin_port = htons(serverPort);
+    inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr);
 
-    if (inet_pton(AF_INET, address.c_str(), &serverAddr.sin_addr) <= 0) {
-        return false;  // Invalid address
+    if (connect(clientSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
+        closesocket(clientSocket);
+        throw std::runtime_error("Failed to connect to server.");
     }
 
-    m_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (m_socket == INVALID_SOCKET) {
-        throw std::runtime_error("Failed to create socket");
+    u_long nonBlocking = 1;
+    if (ioctlsocket(clientSocket, FIONBIO, &nonBlocking) == SOCKET_ERROR) {
+        throw std::runtime_error("Failed to set non-blocking mode.");
     }
-
-    if (connect(m_socket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) == SOCKET_ERROR) {
-        closesocket(m_socket);
-        return false;
-    }
-
-    return true;
 }
 
-// Receive a message
-bool ClientSocket::receive(std::string& message) {
-    char buffer[512];
-    int bytesReceived = recv(m_socket, buffer, sizeof(buffer) - 1, 0);
-
-    if (bytesReceived > 0) {
-        buffer[bytesReceived] = '\0';
-        message = std::string(buffer);
-        return true;
+void ClientSocket::sendMessage(const std::string& tag, const std::string& message) {
+    if (this->closed) {
+        throw std::runtime_error("Cannot send message; connection closed.");
     }
-    else if (bytesReceived == 0) {
-        close(); // Connection closed by the server
+
+    std::ostringstream formattedMessage;
+    formattedMessage << tag << ":" << message << "\n";
+
+    std::string toSend = formattedMessage.str();
+    int result = send(clientSocket, toSend.c_str(), static_cast<int>(toSend.size()), 0);
+    if (result == SOCKET_ERROR) {
+        throw std::runtime_error("Failed to send message.");
+    }
+}
+
+bool ClientSocket::receiveMessage(std::string& tag, std::string& message) {
+    if (this->closed) return false;
+
+    char buffer[512];
+    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+    if (bytesReceived == 0) {
+        this->closed = true;
+        return false;
+    }
+    if (bytesReceived == SOCKET_ERROR) {
+        if (WSAGetLastError() == WSAEWOULDBLOCK) return false;
+        throw std::runtime_error("Failed to receive message.");
+    }
+
+    buffer[bytesReceived] = '\0';
+    std::string receivedMessage(buffer);
+
+    size_t delimiter = receivedMessage.find(':');
+    if (delimiter != std::string::npos) {
+        tag = receivedMessage.substr(0, delimiter);
+        message = receivedMessage.substr(delimiter + 1);
+        return true;
     }
 
     return false;
 }
 
-// Send a message
-void ClientSocket::send(const std::string& message) {
-    if (!m_closed) {
-        ::send(m_socket, message.c_str(), static_cast<int>(message.size()), 0);
-    }
-}
-
-// Check if socket is closed
-bool ClientSocket::closed() const {
-    return m_closed;
-}
-
-// Close the socket
-void ClientSocket::close() {
-    if (!m_closed && m_socket != INVALID_SOCKET) {
-        closesocket(m_socket);
-        m_closed = true;
-    }
-}
-
-// Get username
-std::string ClientSocket::getUsername() const {
-    return m_username;
-}
-
-// Set username
-void ClientSocket::setUsername(const std::string& username) {
-    m_username = username;
-}
-
-bool ClientSocket::isConnected() const { 
-    // Check if the socket is valid and not closed 
-    return m_socket != INVALID_SOCKET && !m_closed; 
-}
-
-// Add this method to handle user list updates sent by the server
-void ClientSocket::receiveUserList(std::string& message) {
-    if (message.compare(0, 8, "Players:") == 0) {
-        // Process and display the user list
-        lobbyPage->refreshUserList(message);
-    }
+bool ClientSocket::isConnectionClosed() const {
+    return this->closed;
 }

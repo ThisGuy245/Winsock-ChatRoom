@@ -1,38 +1,35 @@
-#ifndef HOMEPAGE_H
-#define HOMEPAGE_H
+#ifndef HOMEPAGE_HPP
+#define HOMEPAGE_HPP
 
 #include <FL/Fl_Group.H>
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Box.H>
-#include <FL/Fl_Text_Display.H>
+#include <string>
 
-// Forward declaration of MainWindow to avoid circular dependency
+class Fl_Input;
+class Fl_Button;
 class MainWindow;
-class LobbyPage;
 
 class HomePage : public Fl_Group {
 public:
-    // Constructor accepting MainWindow pointer
-    HomePage(int x, int y, int w, int h, MainWindow* mainWindow);
-    ~HomePage();
+    // Constructor
+    HomePage(int X, int Y, int W, int H, MainWindow* parent);
 
-    static void host_button_callback(Fl_Widget* widget, void* userdata);
-    static void join_button_callback(Fl_Widget* widget, void* userdata);
-    static void login_button_callback(Fl_Widget* widget, void* userdata);  // Callback for login button
-    static void username_input_callback(Fl_Widget* widget, void* userdata);  // Callback for username input
-
-    LobbyPage* lobbyPage;
+    // Destructor
+    virtual ~HomePage();
 
 private:
-    MainWindow* m_mainWindow; // Pointer to the parent MainWindow
-    Fl_Input* usernameInput;  // Input field for the username
-    Fl_Button* hostButton;    // Button to host the server
-    Fl_Button* joinButton;    // Button to join the server
-    Fl_Button* loginButton;   // Login button to activate Host/Join buttons
+    MainWindow* mainWindow;  // Reference to the parent MainWindow
 
-    // Static callback functions
-    
+    Fl_Input* usernameInput; // Input field for username
+    Fl_Input* ipInput;       // Input field for server IP address
+    Fl_Button* hostButton;   // Button to host a server
+    Fl_Button* joinButton;   // Button to join a server
+
+    // Callback functions for the buttons
+    static void hostButtonCallback(Fl_Widget* widget, void* userdata);
+    static void joinButtonCallback(Fl_Widget* widget, void* userdata);
+
+    // Utility function to get the local IP address
+    static std::string getLocalIPAddress();
 };
 
-#endif
+#endif // HOMEPAGE_HPP

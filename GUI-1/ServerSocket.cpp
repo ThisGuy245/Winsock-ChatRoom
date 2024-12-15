@@ -1,107 +1,128 @@
-
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "ServerSocket.h"
 #include "ClientSocket.h"
-#include <ws2tcpip.h> // For TCP/IP functionality
-#include <string>
-#include <stdexcept> // For throwing exceptions
+#include <iostream>
+#include <stdexcept>
+#include <sstream>
 
-// Constructor: Initializes the server socket and binds it to the specified port
-ServerSocket::ServerSocket(int _port)
-    : m_socket(INVALID_SOCKET) {
-    addrinfo hints = { 0 };
+ServerSocket::ServerSocket(int port) : serverSocket(INVALID_SOCKET) {
+    configureSocket(port);
+    retrieveHostIP();
+    std::cout << "Server running on IP: " << serverIP << "\n";
+}
+
+ServerSocket::~ServerSocket() {
+    for (const auto& client : clients) {
+        client->sendMessage("shutdown", "Server is closing.");
+    }
+    closesocket(serverSocket);
+    clients.clear();
+}
+
+void ServerSocket::configureSocket(int port) {
+    addrinfo hints = {}, * result = nullptr;
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
 
-    addrinfo* result = NULL;
-
-    if (getaddrinfo(NULL, std::to_string(_port).c_str(), &hints, &result) != 0) {
-        throw std::runtime_error("Failed to resolve server address or port");
+    if (getaddrinfo(nullptr, std::to_string(port).c_str(), &hints, &result) != 0) {
+        throw std::runtime_error("Address resolution failed.");
     }
 
-    m_socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (m_socket == INVALID_SOCKET) {
+    serverSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (serverSocket == INVALID_SOCKET) {
         freeaddrinfo(result);
-        throw std::runtime_error("Failed to create socket!");
+        throw std::runtime_error("Socket creation failed.");
     }
 
-    int opt = 1;
-    if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) == SOCKET_ERROR) {
-        throw std::runtime_error("setsockopt failed!");
-    }
-
-    if (bind(m_socket, result->ai_addr, result->ai_addrlen) == SOCKET_ERROR) {
+    if (bind(serverSocket, result->ai_addr, int(result->ai_addrlen)) == SOCKET_ERROR) {
         freeaddrinfo(result);
-        closesocket(m_socket);
-        throw std::runtime_error("Failed to bind socket!");
+        throw std::runtime_error("Socket binding failed.");
+    }
+
+    if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
+        throw std::runtime_error("Listening setup failed.");
+    }
+
+    u_long nonBlocking = 1;
+    if (ioctlsocket(serverSocket, FIONBIO, &nonBlocking) == SOCKET_ERROR) {
+        throw std::runtime_error("Failed to set non-blocking mode.");
     }
 
     freeaddrinfo(result);
-
-    if (listen(m_socket, SOMAXCONN) == SOCKET_ERROR) {
-        throw std::runtime_error("Failed to listen on socket");
-    }
-
-    u_long mode = 1;
-    if (ioctlsocket(m_socket, FIONBIO, &mode) == SOCKET_ERROR) {
-        throw std::runtime_error("Failed to set non-blocking mode");
-    }
 }
 
-// Destructor: Closes the server socket
-ServerSocket::~ServerSocket() {
-    closesocket(m_socket);
+void ServerSocket::retrieveHostIP() {
+    sockaddr_in loopbackAddr = {};
+    loopbackAddr.sin_family = AF_INET;
+    loopbackAddr.sin_addr.s_addr = inet_addr("8.8.8.8"); // External address
+    loopbackAddr.sin_port = htons(53); // Arbitrary port
+
+    SOCKET tempSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (connect(tempSocket, reinterpret_cast<sockaddr*>(&loopbackAddr), sizeof(loopbackAddr)) == SOCKET_ERROR) {
+        closesocket(tempSocket);
+        throw std::runtime_error("Failed to connect for IP retrieval.");
+    }
+
+    sockaddr_in hostAddr;
+    int addrLen = sizeof(hostAddr);
+    if (getsockname(tempSocket, reinterpret_cast<sockaddr*>(&hostAddr), &addrLen) == SOCKET_ERROR) {
+        closesocket(tempSocket);
+        throw std::runtime_error("Failed to get host IP.");
+    }
+
+    char ipBuffer[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &hostAddr.sin_addr, ipBuffer, sizeof(ipBuffer));
+    serverIP = ipBuffer;
+    closesocket(tempSocket);
 }
 
-// Accept a new client connection
-std::shared_ptr<ClientSocket> ServerSocket::accept() {
-    SOCKET clientSocket = ::accept(m_socket, NULL, NULL);
-    if (clientSocket == INVALID_SOCKET) {
+std::shared_ptr<ClientSocket> ServerSocket::acceptClient() {
+    SOCKET clientSock = accept(serverSocket, nullptr, nullptr);
+    if (clientSock == INVALID_SOCKET) {
         if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            throw std::runtime_error("Failed to accept socket");
+            throw std::runtime_error("Client acceptance failed.");
         }
         return nullptr;
     }
-
-    auto newClient = std::make_shared<ClientSocket>(clientSocket);
-    m_clients.push_back(newClient);
-
-    return newClient;
+    return std::make_shared<ClientSocket>(clientSock);
 }
 
-// Get the list of connected clients
-std::vector<std::shared_ptr<ClientSocket>>& ServerSocket::getClients() {
-    return m_clients;
-}
-
-
-void ServerSocket::broadcastUserList() {
-    std::string userList = "Players:\n";
-    for (const auto& client : m_clients) {
-        userList += client->getUsername() + "\n";
+void ServerSocket::manageClients() {
+    auto client = acceptClient();
+    if (client) {
+        clients.push_back(client);
+        usernames.push_back("");
+        std::cout << "New client connected. Total: " << clients.size() << "\n";
     }
-    for (auto& client : m_clients) {
-        client->send(userList);  // Send the updated list to all clients
-    }
-}
 
-void ServerSocket::addClient(std::shared_ptr<ClientSocket> client) {
-    m_clients.push_back(client);
-    broadcastUserList();  // Notify all clients about the new user
-}
-
-
-// Remove a client from the list
-void ServerSocket::removeClient(std::shared_ptr<ClientSocket> client) {
-    m_clients.erase(std::remove(m_clients.begin(), m_clients.end(), client), m_clients.end());
-}
-
-// Broadcast a message to all clients
-void ServerSocket::broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> sender) {
-    for (auto& client : m_clients) {
-        if (client != sender) { // Avoid sending the message back to the sender
-            client->send(message);
+    for (size_t i = 0; i < clients.size(); ++i) {
+        std::string tag, message;
+        if (clients[i]->receiveMessage(tag, message)) {
+            if (tag == "username") {
+                usernames[i] = message;
+                for (const auto& otherClient : clients) {
+                    otherClient->sendMessage("newUser", message);
+                }
+            }
+            else if (tag == "message") {
+                for (const auto& otherClient : clients) {
+                    otherClient->sendMessage("broadcast", message);
+                }
+            }
         }
+
+        if (clients[i]->isConnectionClosed()) {
+            std::cout << "Client disconnected.\n";
+            clients.erase(clients.begin() + i);
+            usernames.erase(usernames.begin() + i);
+            --i;
+        }
+
     }
+}
+
+std::string ServerSocket::getServerIP() const {
+    return serverIP;
 }

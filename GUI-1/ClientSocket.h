@@ -3,44 +3,29 @@
 
 #include <string>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
-struct ClientSocket {
+class ClientSocket {
 public:
-    // Constructor for creating an uninitialized client socket
-    ClientSocket();
+    // Constructor for server-side socket
+    explicit ClientSocket(SOCKET sock);
 
-    // Constructor for wrapping an existing socket
-    explicit ClientSocket(SOCKET socket);
+    // Constructor for client-side connection
+    ClientSocket(const std::string& serverIP, int serverPort);
 
     // Destructor
     ~ClientSocket();
 
-    // Connect to a server at the given address and port
-    bool ConnectToServer(const std::string& address, int port);
-    bool isConnected() const;
-
-    void receiveUserList(std::string& message);
-
-    // Receive a message from the socket
-    bool receive(std::string& message);
-
-    // Send a message through the socket
-    void send(const std::string& message);
-
-    // Check if the socket is closed
-    bool closed() const;
-
-    // Close the socket manually
-    void close();
-
-    std::string getUsername() const;
-    void setUsername(const std::string& username);
+    // Public methods
+    void sendMessage(const std::string& tag, const std::string& message);
+    bool receiveMessage(std::string& tag, std::string& message);
+    bool isConnectionClosed() const;
 
 private:
-    SOCKET m_socket;  // Underlying socket
-    bool m_closed;    // Whether the socket is closed
-    int m_playerId;   // Unique player ID for this client
-    std::string m_username;
+    void configureSocket(const std::string& serverIP, int serverPort);
+
+    SOCKET clientSocket; // Holds the socket for communication
+    bool closed;         // Tracks if the socket is closed
 };
 
-#endif // CLIENTSOCKET_H
+#endif

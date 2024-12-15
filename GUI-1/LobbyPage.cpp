@@ -1,179 +1,202 @@
 #include "LobbyPage.hpp"
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Box.H>
-#include <FL/Fl_Scroll.H>
-#include <sstream>
-#include <algorithm>
+#include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Text_Display.H>
+#include <FL/Fl_Text_Buffer.H>
+#include <FL/Fl_Ask.H>
+#include <FL/Fl.H>
 #include <iostream>
+#include <sstream>
+#include <vector>
+#include <string>
 
-LobbyPage::LobbyPage(int x, int y, int w, int h)
-    : Fl_Group(x, y, w, h), chatDisplay(nullptr), chatBuffer(nullptr), userListDisplay(nullptr), userListBuffer(nullptr), inputBox(nullptr) {
-    // Sidebar for user list
-    userListBuffer = new Fl_Text_Buffer();
-    userListDisplay = new Fl_Text_Display(x, y, 200, h);
-    userListDisplay->box(FL_UP_BOX);
-    userListDisplay->buffer(userListBuffer);
-    userListDisplay->labelsize(14);
-    userListDisplay->textsize(12);
+// Constructor to initialize the LobbyPage
+LobbyPage::LobbyPage(int X, int Y, int W, int H)
+    : Fl_Window(X, Y, W, H, "Lobby") {
 
-    // Chat display
-    chatBuffer = new Fl_Text_Buffer();
-    chatDisplay = new Fl_Text_Display(x + 210, y, w - 220, h - 60);
-    chatDisplay->box(FL_BORDER_BOX);
-    chatDisplay->buffer(chatBuffer);
-    chatDisplay->textsize(12);
+    // Create the menu bar
+    menuBar = new Fl_Menu_Bar(0, 0, W, 30);
+    menuBar->add("Server/Disconnect", 0, menuCallback, this);
+    menuBar->add("Server/Exit", 0, menuCallback, this);
+    menuBar->add("Settings/Preferences", 0, menuCallback, this);
+    menuBar->add("About/About App", 0, menuCallback, this);
 
-    // Input box
-    inputBox = new Fl_Input(x + 210, y + h - 50, w - 300, 30, "Message:");
+    // Create the message display area
+    messageDisplay = new Fl_Text_Display(10, 40, W - 220, H - 140);
+    messageBuffer = new Fl_Text_Buffer();
+    messageDisplay->buffer(messageBuffer);
+    messageDisplay->wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
+    messageDisplay->box(FL_DOWN_BOX);
+    messageDisplay->color(FL_WHITE);
+    messageDisplay->textfont(FL_COURIER);
+    messageDisplay->textsize(14);
 
-    // Send button
-    Fl_Button* sendButton = new Fl_Button(x + w - 80, y + h - 50, 70, 30, "Send");
-    sendButton->callback(sendMessageCallback, this);
+    // Create the user list browser
+    userListBrowser = new Fl_Hold_Browser(W - 200, 40, 190, H - 140, "Users:");
+    userListBrowser->box(FL_DOWN_BOX);
 
-    end();
-    applyStyling();
+    // Create the input field for typing messages
+    messageInput = new Fl_Input(10, H - 90, W - 120, 30, "Message:");
+    messageInput->box(FL_DOWN_BOX);
+
+    // Create the send button
+    sendButton = new Fl_Button(W - 100, H - 90, 90, 30, "Send");
+    sendButton->callback(sendButtonCallback, this);
+
+    end(); // Finalize window layout
 }
 
-void LobbyPage::applyStyling() {
-    userListDisplay->color(FL_LIGHT3);
-    chatDisplay->color(FL_WHITE);
-    inputBox->color(FL_WHITE);
+// Destructor to clean up resources
+LobbyPage::~LobbyPage() {
+    delete menuBar;
+    delete messageDisplay;
+    delete messageBuffer;
+    delete messageInput;
+    delete sendButton;
+    delete userListBrowser;
 }
 
-void LobbyPage::Update() {
-    if (serverSocket) {
-        processServerUpdates();
+// Menu callback for handling menu item actions
+void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
+    Fl_Menu_Bar* menu = static_cast<Fl_Menu_Bar*>(widget);
+    LobbyPage* lobbyPage = static_cast<LobbyPage*>(userdata);
+    if (!menu || !lobbyPage) return;
+
+    const char* picked = menu->text();
+    if (strcmp(picked, "Server/Disconnect") == 0) {
+        lobbyPage->disconnect();
     }
+    else if (strcmp(picked, "Server/Exit") == 0) {
+        exit(0);
+    }
+    else if (strcmp(picked, "Settings/Preferences") == 0) {
+        fl_alert("Settings feature is not implemented yet.");
+    }
+    else if (strcmp(picked, "About/About App") == 0) {
+        fl_alert("Chat Client App v1.0\nDeveloped using FLTK and Winsock.");
+    }
+}
+
+// Function to send messages using the Send button or Enter key
+void LobbyPage::sendMessage() {
+    const std::string message = messageInput->value();
+    if (message.empty()) return;
+
     if (clientSocket) {
-        processClientUpdates();
-    }
-}
-
-void LobbyPage::processServerUpdates() {
-    auto newClient = serverSocket->accept();
-    if (newClient) {
-        serverSocket->addClient(newClient);
-        updateConnectedUsers();
-    }
-
-    for (auto& client : serverSocket->getClients()) {
-        std::string message;
-        if (client->receive(message)) {
-            sendMessageToAll(message, client);
+        try {
+            clientSocket->sendMessage("message", message);
+            messages.push_back("You: " + message);
+            messageBuffer->text(joinMessages(messages).c_str());
+            messageInput->value(""); // Clear input field
+        }
+        catch (const std::exception& e) {
+            fl_alert("Failed to send message: %s", e.what());
         }
     }
 }
 
-void LobbyPage::processClientUpdates() {
-    std::string message;
-    while (clientSocket->receive(message)) {
-        if (message.compare(0, 8, "Players:") == 0) {
-            refreshUserList(message);
-        }
-        else {
-            appendChatMessage(message);
-        }
+// Function to handle the Send button click
+void LobbyPage::sendButtonCallback(Fl_Widget* widget, void* userdata) {
+    LobbyPage* lobbyPage = static_cast<LobbyPage*>(userdata);
+    if (lobbyPage) {
+        lobbyPage->sendMessage();
     }
 }
 
-void LobbyPage::sendMessageToAll(const std::string& message, std::shared_ptr<ClientSocket> sender) {
+// Override handle to capture Enter key for sending messages
+int LobbyPage::handle(int event) {
+    if (event == FL_KEYDOWN) {
+        if (Fl::event_key() == FL_Enter || Fl::event_key() == FL_KP_Enter) {
+            sendMessage();
+            return 1; // Indicate the event was handled
+        }
+    }
+    return Fl_Window::handle(event);
+}
+
+// Function to update the user list with a new user
+void LobbyPage::updateUserList(const std::string& username) {
+    userListBrowser->add(username.c_str());
+}
+
+// Function to handle new incoming messages
+void LobbyPage::handleNewMessage(const std::string& message) {
+    messages.push_back(message);
+    messageBuffer->text(joinMessages(messages).c_str());
+}
+
+// Function to disconnect from the server
+void LobbyPage::disconnect() {
+    if (clientSocket) {
+        clientSocket->sendMessage("disconnect", "User has disconnected.");
+        clientSocket.reset();
+    }
     if (serverSocket) {
-        for (const auto& client : serverSocket->getClients()) {
-            if (client != sender) {
-                client->send(message);
+        serverSocket.reset();
+    }
+    fl_alert("Disconnected from server.");
+}
+
+// Helper to join messages into a single string
+std::string LobbyPage::joinMessages(const std::vector<std::string>& messages) const {
+    std::ostringstream oss;
+    for (const auto& message : messages) {
+        oss << message << "\n";
+    }
+    return oss.str();
+}
+// Host server function (if the user is hosting the server)
+void LobbyPage::hostServer() {
+    try {
+        serverSocket = std::make_shared<ServerSocket>(12345); // Port 12345
+        std::cout << "Server hosted at IP: " << serverSocket->getServerIP() << std::endl;
+    }
+    catch (const std::runtime_error& e) {
+        fl_alert("Failed to host server: %s", e.what());
+    }
+}
+
+// Join server function (if the user is joining a server)
+void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
+    try {
+        // Connect to the server
+        clientSocket = std::make_shared<ClientSocket>(ip, 12345); // Port 12345
+        clientSocket->sendMessage("username", username); // Send username to the server
+
+        std::cout << "Connected to server at " << ip << " as " << username << std::endl;
+
+        // Receive the list of current users
+        std::string tag, message;
+        if (clientSocket->receiveMessage(tag, message) && tag == "userList") {
+            std::cout << "Current users in the server:\n";
+            std::istringstream iss(message);
+            std::string user;
+            while (std::getline(iss, user, ',')) {
+                std::cout << "- " << user << std::endl;
+                updateUserList(user); // Add each user to the user list browser
             }
         }
-        appendChatMessage(message);
     }
-    if (clientSocket) {
-        clientSocket->send(message);
+    catch (const std::runtime_error& e) {
+        fl_alert("Failed to connect to server: %s", e.what());
     }
 }
 
-void LobbyPage::initializeServer(std::shared_ptr<ServerSocket> server, const std::string& username) {
-    serverSocket = server;
-    localUsername = username;
-    players.push_back(username);
-    updateConnectedUsers();
-    sendMessageToAll(username + " has joined the chat.");
-}
 
-void LobbyPage::initializeClient(std::shared_ptr<ClientSocket> client, const std::string& username) {
-    clientSocket = client;
-    localUsername = username;
-    appendChatMessage("Connected to the server as " + username + ".");
-    clientSocket->send(username + " has joined the chat.");
-    sendUserList();  // Send the updated user list to the server (and other clients)
-}
+// Update function to handle periodic updates from the server
+void LobbyPage::Update() {
+    if (!clientSocket) return;
 
-void LobbyPage::updateConnectedUsers() {
-    std::string userList = "Players:\n";
-    for (const auto& client : serverSocket->getClients()) {
-        userList += client->getUsername() + "\n";
-    }
-    userList += localUsername + "\n";
-    sendMessageToAll(userList);
-    userListBuffer->text(userList.c_str());  // Update the user list in the UI
-}
-
-void LobbyPage::sendUserList() {
-    std::string userList = "Players:\n";
-    if (serverSocket) {
-        for (const auto& client : serverSocket->getClients()) {
-            userList += client->getUsername() + "\n";
+    std::string tag, message;
+    while (clientSocket->receiveMessage(tag, message)) {
+        if (tag == "broadcast") {
+            handleNewMessage(message);
         }
-    }
-    userList += localUsername + "\n";
-    if (clientSocket) {
-        clientSocket->send(userList);
-    }
-}
-
-// Update user list based on messages from other clients
-void LobbyPage::refreshUserList(const std::string& message) {
-    players.clear();
-    std::istringstream stream(message.substr(9)); // Skip "Players:\n"
-    std::string player;
-    while (std::getline(stream, player)) {
-        if (!player.empty()) {
-            players.push_back(player);
+        else if (tag == "newUser") {
+            updateUserList(message);
         }
-    }
-    userListBuffer->text(message.substr(9).c_str());  // Update the side panel
-}
-
-
-// Update user list based on messages from other clients
-void LobbyPage::refreshUserList(const std::string& message) {
-    players.clear();
-    std::istringstream stream(message.substr(9)); // Skip "Players:\n"
-    std::string player;
-    while (std::getline(stream, player)) {
-        if (!player.empty()) {
-            players.push_back(player);
+        else if (tag == "disconnect") {
+            messages.push_back(message + " has disconnected.");
+            messageBuffer->text(joinMessages(messages).c_str());
         }
-    }
-    userListBuffer->text(message.substr(9).c_str());  // Update the side panel
-}
-
-
-void LobbyPage::appendChatMessage(const std::string& message) {
-    if (chatBuffer) {
-        chatBuffer->append((message + "\n").c_str());
-    }
-}
-
-void LobbyPage::sendMessageCallback(Fl_Widget* widget, void* userdata) {
-    auto* lobbyPage = static_cast<LobbyPage*>(userdata);
-    const char* text = lobbyPage->inputBox->value();
-    if (text && text[0] != '\0') {
-        std::string message = lobbyPage->localUsername + ": " + text;
-        if (lobbyPage->serverSocket) {
-            lobbyPage->sendMessageToAll(message);
-        }
-        else if (lobbyPage->clientSocket) {
-            lobbyPage->clientSocket->send(message);
-        }
-        lobbyPage->inputBox->value("");
     }
 }
