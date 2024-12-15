@@ -6,9 +6,10 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Text_Display.H>
 #include <FL/Fl_Text_Buffer.H>
+#include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Scroll.H>
 
 #include <string>
-
 #include "ClientSocket.h"
 #include "ServerSocket.h"
 
@@ -24,11 +25,20 @@ public:
     void receiveMessages();  // Helper function to process received messages
 
 private:
+    // Widgets
+    Fl_Menu_Bar* menuBar;
+    Fl_Scroll* scrollArea;  // For chat display and input area
+    Fl_Text_Display* chatDisplay;  // Display for chat history
+    Fl_Text_Buffer* chatBuffer;
     Fl_Input* messageInput;
     Fl_Button* sendButton;
+
+    // Network connections
     ClientSocket* client;
     ServerSocket* server;
-    Fl_Text_Display* chatDisplay;  // Display for chat history
+
+    // Callback for menu items
+    static void menuCallback(Fl_Widget* widget, void* userdata);
 };
 
 #endif // LOBBYPAGE_HPP
