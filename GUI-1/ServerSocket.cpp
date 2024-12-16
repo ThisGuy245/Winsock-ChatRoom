@@ -1,8 +1,9 @@
-
 #include <WS2tcpip.h>
 #include <stdexcept>
 #include <string>
 #include "ServerSocket.h"
+#include "ClientSocket.h"
+
 
 ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
 {
@@ -27,7 +28,7 @@ ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
 	}
 
 	m_socket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-
+	
 	if (m_socket == INVALID_SOCKET)
 	{
 		freeaddrinfo(result);
@@ -46,7 +47,7 @@ ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
 	{
 		throw std::runtime_error("Failed to listen on socket");
 	}
-
+	
 	u_long mode = 1;
 
 	if (ioctlsocket(m_socket, FIONBIO, &mode) == SOCKET_ERROR)
@@ -80,41 +81,38 @@ std::shared_ptr<ClientSocket> ServerSocket::accept()
 }
 
 //needs to be on tick constatnly running
-void ServerSocket::handleClientConnections()
-{
+void ServerSocket::handleClientConnections() {
 	// Accept new client connections
 	std::shared_ptr<ClientSocket> client = accept();
-	if (client)
-	{
+	if (client) {
 		printf("Client Connected!\n");
+
+		// Request username from the client
+		std::string username;
+		if (client->receive(username)) {
+			client->setUsername(username);
+			printf("Username received: %s\n", username.c_str());
+		}
+		else {
+			printf("Failed to receive username from client.\n");
+		}
 		clients.push_back(client);
 	}
 
 	// Handle messages from connected clients
-	for (int i = 0; i < clients.size(); ++i)
-	{
+	for (int i = 0; i < clients.size(); ++i) {
 		std::string message;
 		bool receivedMessage = clients[i]->receive(message);
-
-		if (receivedMessage)
-		{
+		if (receivedMessage) {
 			printf("Message received: %s\n", message.c_str());
-			for (int i = 0; i < clients.size(); i++)
-			{
-				clients[i]->send(message);
+			const std::string& username = clients[i]->getUsername();
+
+			// Broadcast this message to all clients
+			for (int j = 0; j < clients.size(); ++j) {
+				if (i != j) {
+					clients[j]->send(username, message);
+				}
 			}
 		}
-
-		//if (!receivedMessage)
-		//{
-		//	printf("Client Disconnected\n");
-		//	std::string number = std::to_string(i);
-		//	printf(number.c_str());
-
-		//	//gets rid of client from list
-		//	clients.erase(clients.begin() + i);
-		//	--i;
-		//}
 	}
 }
-

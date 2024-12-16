@@ -51,32 +51,36 @@ LobbyPage::~LobbyPage() {
 }
 
 void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
+    this->username = username;  // Set the username for this session
     server = new ServerSocket(12345);
-    client = new ClientSocket(ip, 12345);
+    client = new ClientSocket(ip, 12345, username);  // Pass the username
 }
 
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
-    client = new ClientSocket(ip, 12345);
+    this->username = username;  // Set the username for this session
+    client = new ClientSocket(ip, 12345, username);  // Pass the username
 }
+
 
 void LobbyPage::sendMessage(const std::string& message) {
     if (client) {
-        client->send(message);
-        // Add the message to chat buffer for display
-        //chatBuffer->append(("You: " + message + "\n").c_str());
+        client->send(username, message);  // Send the username along with the message
+        chatBuffer->append(("You: " + message + "\n").c_str());
     }
 }
 
 void LobbyPage::receiveMessages() {
     std::string message;
     if (client && client->receive(message)) {
-        // Display the received message with the username
-        chatBuffer->append((username + ": " + message + "\n").c_str());
+        chatBuffer->append((message + "\n").c_str());  // Message already includes username
     }
+
     if (server) {
-        server->handleClientConnections();
+        server->handleClientConnections();  // Handle incoming server-client connections
     }
 }
+
+
 
 
 // This is called every frame to keep the chat updated

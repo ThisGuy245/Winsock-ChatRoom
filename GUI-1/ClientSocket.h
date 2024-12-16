@@ -5,25 +5,27 @@
 #include <stdexcept>
 #include <WS2tcpip.h>
 
-
 struct ServerSocket;
 
-struct ClientSocket
-{
-	ClientSocket(SOCKET socket);
-	ClientSocket(const std::string& ipAddress, int port);
-	~ClientSocket();
+struct ClientSocket {
+    ClientSocket(SOCKET socket);
+    ClientSocket(const std::string& ipAddress, int port, const std::string& username);
+    ~ClientSocket();
 
-	bool receive(std::string& _message);
-	void send(const std::string& _message);
-	bool closed();
+    void setUsername(const std::string& username);
+    const std::string& getUsername() const;
 
+    void send(const std::string& username, const std::string& message);
+    bool receive(std::string& message);
+
+    bool closed();
 
 private:
-	friend struct ServerSocket;
-	SOCKET m_socket;
-	bool m_closed;
-	ClientSocket(const ClientSocket& _copy);
-	ClientSocket& operator=(const ClientSocket& _assign);
+    friend struct ServerSocket;
 
+    SOCKET m_socket;
+    bool m_closed;
+    std::string m_username;  // Consistent username variable
+    ClientSocket(const ClientSocket& _copy);
+    ClientSocket& operator=(const ClientSocket& _assign);
 };
