@@ -15,17 +15,17 @@ struct ClientSocket {
     void setUsername(const std::string& username);
     const std::string& getUsername() const;
 
-    void send(const std::string& username, const std::string& message);
+    void send(const std::string& message);
     bool receive(std::string& message);
 
     bool closed();
 
 private:
     friend struct ServerSocket;
-
     SOCKET m_socket;
     bool m_closed;
-    std::string m_username;  // Consistent username variable
-    ClientSocket(const ClientSocket& _copy);
-    ClientSocket& operator=(const ClientSocket& _assign);
+    std::string m_username;
+
+    ClientSocket(const ClientSocket& _copy) = delete;
+    ClientSocket& operator=(const ClientSocket& _assign) = delete;
 };

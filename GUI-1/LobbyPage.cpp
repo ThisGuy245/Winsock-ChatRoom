@@ -64,7 +64,7 @@ void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
 
 void LobbyPage::sendMessage(const std::string& message) {
     if (client) {
-        client->send(username, message);  // Send the username along with the message
+        client->send(message);  // Only send the message, not the username
         chatBuffer->append(("You: " + message + "\n").c_str());
     }
 }
@@ -79,6 +79,7 @@ void LobbyPage::receiveMessages() {
         server->handleClientConnections();  // Handle incoming server-client connections
     }
 }
+
 
 
 

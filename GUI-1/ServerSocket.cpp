@@ -100,17 +100,17 @@ void ServerSocket::handleClientConnections() {
 	}
 
 	// Handle messages from connected clients
-	for (int i = 0; i < clients.size(); ++i) {
+	for (size_t i = 0; i < clients.size(); ++i) {
 		std::string message;
-		bool receivedMessage = clients[i]->receive(message);
-		if (receivedMessage) {
-			printf("Message received: %s\n", message.c_str());
+		if (clients[i]->receive(message)) {
 			const std::string& username = clients[i]->getUsername();
+			printf("Message received from %s: %s\n", username.c_str(), message.c_str());
 
-			// Broadcast this message to all clients
-			for (int j = 0; j < clients.size(); ++j) {
+			// Broadcast the message to all clients
+			std::string broadcastMessage = username + ": " + message;
+			for (size_t j = 0; j < clients.size(); ++j) {
 				if (i != j) {
-					clients[j]->send(username, message);
+					clients[j]->send(broadcastMessage);
 				}
 			}
 		}
