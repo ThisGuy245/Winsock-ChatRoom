@@ -1,22 +1,32 @@
-#include <winsock2.h>
+#ifndef SERVERSOCKET_H
+#define SERVERSOCKET_H
+
+#include <WinSock2.h>
 #include <memory>
 #include <vector>
+#include <unordered_map>
+#include <string>
 #include "ClientSocket.h"
 
-struct ServerSocket
-{
-	ServerSocket(int _port);
-	~ServerSocket();
+class ServerSocket {
+public:
+    // Constructor & Destructor
+    ServerSocket(int port);
+    ~ServerSocket();
 
-	std::shared_ptr<ClientSocket> accept();
-	void handleClientConnections();
+    // Accept a new client
+    std::shared_ptr<ClientSocket> accept();
+
+    // Constantly handle client connections (to be run on a timer)
+    void handleClientConnections();
+
+    // Broadcast a message to all clients except one
+    void broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> excludeClient = nullptr);
 
 private:
-	SOCKET m_socket;
-	bool m_closed;
-	ServerSocket(const ServerSocket& _copy);
-	ServerSocket& operator=(const ServerSocket& _assign);
-	bool receive(std::string& _message);
-	std::vector<std::shared_ptr<ClientSocket>> clients; //stores connected clients
-
+    SOCKET m_socket;                                   // Server socket
+    std::vector<std::shared_ptr<ClientSocket>> clients; // List of connected clients
+    std::unordered_map<std::shared_ptr<ClientSocket>, std::string> clientUsernames; // Map of clients to their usernames
 };
+
+#endif // SERVERSOCKET_H

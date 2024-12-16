@@ -64,38 +64,46 @@ ClientSocket::~ClientSocket()
 }
 
 //to accept a message from client socket
-bool ClientSocket::receive(std::string& _message)
-{
-	char buffer[128] = { 0 };
+bool ClientSocket::receive(std::string& sender, std::string& message) {
+	char buffer[256] = { 0 }; // Increased buffer size for longer messages
 	int bytes = ::recv(m_socket, buffer, sizeof(buffer) - 1, 0);
-	if (bytes == SOCKET_ERROR)
-	{
-		if (WSAGetLastError() != WSAEWOULDBLOCK)
-		{
+	if (bytes == SOCKET_ERROR) {
+		if (WSAGetLastError() != WSAEWOULDBLOCK) {
 			m_closed = true;
 			return false;
-			//throw std::runtime_error("Read failed");
 		}
 		return false;
 	}
-	else if (bytes == 0)
-	{
+	else if (bytes == 0) {
 		m_closed = true;
 		return false;
 	}
-	_message = buffer;
+
+	std::string receivedData = buffer;
+
+	// Parse the sender and message
+	size_t delimiterPos = receivedData.find(": ");
+	if (delimiterPos != std::string::npos) {
+		sender = receivedData.substr(0, delimiterPos);  // Extract username
+		message = receivedData.substr(delimiterPos + 2); // Extract message
+	}
+	else {
+		sender = "Unknown"; // Fallback if no delimiter found
+		message = receivedData;
+	}
 	return true;
 }
 
+
 //to send a message to client socket
-void ClientSocket::send(const std::string& _message)
-{
-	int bytes = ::send(m_socket, _message.c_str(), _message.length(), 0);
-	if (bytes <= 0)
-	{
+void ClientSocket::send(const std::string& username, const std::string& message) {
+	std::string taggedMessage = username + ": " + message;
+	int bytes = ::send(m_socket, taggedMessage.c_str(), taggedMessage.length(), 0);
+	if (bytes <= 0) {
 		throw std::runtime_error("Failed to send data");
 	}
 }
+
 
 bool ClientSocket::closed()
 {

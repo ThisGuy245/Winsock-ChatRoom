@@ -61,15 +61,14 @@ void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
 
 void LobbyPage::sendMessage(const std::string& message) {
     if (client) {
-        client->send(message);
-        // Add the message to chat buffer for display
+        client->send(username, message);
         //chatBuffer->append(("You: " + message + "\n").c_str());
     }
 }
 
 void LobbyPage::receiveMessages() {
     std::string message;
-    if (client && client->receive(message)) {
+    if (client && client->receive(username, message)) {
         // Display the received message with the username
         chatBuffer->append((username + ": " + message + "\n").c_str());
     }

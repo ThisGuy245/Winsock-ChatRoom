@@ -14,8 +14,8 @@ struct ClientSocket
 	ClientSocket(const std::string& ipAddress, int port);
 	~ClientSocket();
 
-	bool receive(std::string& _message);
-	void send(const std::string& _message);
+	bool receive(std::string& sender, std::string& _message);
+	void send(const std::string& username, const std::string& _message);
 	bool closed();
 
 
