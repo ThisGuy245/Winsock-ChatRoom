@@ -24,7 +24,6 @@ public:
     void sendMessage(const std::string& message);
     void receiveMessages(); 
     void setUsername(const std::string& user) { username = user; }
-
     void applyStyles();
 
 private:

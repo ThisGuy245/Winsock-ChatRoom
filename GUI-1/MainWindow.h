@@ -23,6 +23,7 @@ public:
     static void switch_to_lobby(Fl_Widget* widget, void* userdata);
     void on_close(const std::function<void()>& callback);
     void close();
+    void resize(int X, int Y, int W, int H);
     void onTick(void* userdata);
 
     HomePage* homePage;

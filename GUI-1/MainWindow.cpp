@@ -7,6 +7,9 @@
 MainWindow::MainWindow(int width, int height)
     : Fl_Window(width, height), homePage(nullptr), lobbyPage(nullptr), timer(0.1) {
 
+    // Make the window resizable
+    resizable(this);
+
     // Initialize homePage
     homePage = new HomePage(0, 0, width, height, this);
     if (!homePage) {
@@ -17,7 +20,7 @@ MainWindow::MainWindow(int width, int height)
     homePage->show();
 
     // Initialize lobbyPage
-    this->lobbyPage = new LobbyPage(0, 0, width, height);
+    lobbyPage = new LobbyPage(0, 0, width, height);
     if (!lobbyPage) {
         fl_alert("Failed to create LobbyPage!");
         return;
@@ -25,6 +28,7 @@ MainWindow::MainWindow(int width, int height)
     add(lobbyPage);
     lobbyPage->hide();
 
+    // Timer for periodic updates
     timer.setCallback([](void* userdata) {
         auto* window = static_cast<MainWindow*>(userdata);
         if (window) {
@@ -42,6 +46,18 @@ MainWindow::~MainWindow() {
     delete homePage;
     delete lobbyPage;
     close();
+}
+
+// Resize handler to adjust child widget dimensions dynamically
+void MainWindow::resize(int X, int Y, int W, int H) {
+    Fl_Window::resize(X, Y, W, H);
+
+    if (homePage) {
+        homePage->resize(0, 0, W, H);
+    }
+    if (lobbyPage) {
+        lobbyPage->resize(0, 0, W, H);
+    }
 }
 
 // Timer tick callback to update the LobbyPage
@@ -93,7 +109,6 @@ void MainWindow::switch_to_lobby(Fl_Widget* widget, void* userdata) {
     }
     if (window->lobbyPage) {
         window->lobbyPage->show();
-        // Make sure client socket is set when switching to the lobby
     }
     else {
         fl_alert("lobbyPage is not initialized!");
