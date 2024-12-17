@@ -9,6 +9,7 @@
 #include "SettingsWindow.hpp"
 #include "AboutWindow.h"
 
+
 LobbyPage::LobbyPage(int X, int Y, int W, int H)
     : Fl_Group(X, Y, W, H), client(nullptr), server(nullptr) {
     begin();
@@ -19,7 +20,6 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     menuBar->add("Server/Quit", FL_CTRL + 'q', menuCallback, (void*)this);
     menuBar->add("Settings/Preferences", FL_CTRL + 'p', menuCallback, (void*)this);
     menuBar->add("About/Application Info", FL_CTRL + 'a', menuCallback, (void*)this);
-
 
     // Create a scrollable area for chat history and message input
     scrollArea = new Fl_Scroll(0, 30, W, H - 30);
@@ -48,7 +48,6 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
         }
         }, this);
 
-
     // Send button
     sendButton = new Fl_Button(W / 2 - 50, H - 50, 100, 30, "Send");
     sendButton->callback([](Fl_Widget* widget, void* userdata) {
@@ -62,7 +61,6 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
 
     // Initialize player display
     playerDisplay = new PlayerDisplay(X + W - 200, Y + 30, 180, H - 30);
-
 
     end();
     resizable(scrollArea);

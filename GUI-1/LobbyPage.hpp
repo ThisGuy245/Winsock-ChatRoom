@@ -23,7 +23,7 @@ public:
     void joinServer(const std::string& ip, const std::string& username);
     void Update();  // Network update
     void sendMessage(const std::string& message);
-    void receiveMessages(); 
+    void receiveMessages();
     void setUsername(const std::string& user) { username = user; }
     void clientLeft(const std::string& username);
     void applyStyles();
@@ -31,8 +31,8 @@ public:
 private:
     // Widgets
     Fl_Menu_Bar* menuBar;
-    Fl_Scroll* scrollArea;  
-    Fl_Text_Display* chatDisplay;  
+    Fl_Scroll* scrollArea;
+    Fl_Text_Display* chatDisplay;
     Fl_Text_Buffer* chatBuffer;
     Fl_Input* messageInput;
     Fl_Button* sendButton;

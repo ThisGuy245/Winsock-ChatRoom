@@ -10,6 +10,7 @@
 class PlayerDisplay : public Fl_Group {
 private:
     Fl_Scroll* scrollArea;
+    Fl_Box* playersLabel;
     std::vector<Fl_Box*> playerBoxes;  // List of player display boxes
     std::vector<std::pair<std::string, bool>> playerStatus; // Player and connection status
 
@@ -21,6 +22,7 @@ public:
     void removePlayer(const std::string& username);
     void updatePlayerStatus(const std::string& username, bool isConnected);
     void clear();  // Clears the display
+    std::vector<std::string> getPlayers();
 
 private:
     void updateLayout();  // Adjusts layout after player removal

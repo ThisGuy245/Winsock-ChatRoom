@@ -8,8 +8,14 @@ PlayerDisplay::PlayerDisplay(int X, int Y, int W, int H)
     begin();
 
     // Create the scrollable area
-    scrollArea = new Fl_Scroll(X, Y, W, H);
+    scrollArea = new Fl_Scroll(X, Y + 20, W, H - 20);  // Adjust scroll area to make room for the "Players:" label
     scrollArea->type(FL_VERTICAL);  // Enable vertical scrolling
+
+    // Create a static label for "Players:"
+    playersLabel = new Fl_Box(X + 10, Y, W - 20, 20, "Players:");
+    playersLabel->labelfont(FL_HELVETICA_BOLD);
+    playersLabel->labelsize(16);
+    playersLabel->labelcolor(FL_WHITE);
 
     end();
     resizable(scrollArea);  // Allow resizing of scrollArea
@@ -19,6 +25,7 @@ PlayerDisplay::PlayerDisplay(int X, int Y, int W, int H)
 PlayerDisplay::~PlayerDisplay() {
     clear();           // Remove all player boxes
     delete scrollArea; // Delete the scroll area
+    delete playersLabel; // Delete the players label
 }
 
 // Clear function: Removes all player widgets
@@ -103,4 +110,13 @@ void PlayerDisplay::updateLayout() {
         yOffset += 20;
     }
     redraw();
+}
+
+// Get the current list of players
+std::vector<std::string> PlayerDisplay::getPlayers() {
+    std::vector<std::string> players;
+    for (const auto& player : playerStatus) {
+        players.push_back(player.first); // Add player name
+    }
+    return players;
 }
