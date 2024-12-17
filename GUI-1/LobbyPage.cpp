@@ -3,7 +3,8 @@
 #include <FL/Fl_Text_Display.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Scroll.H>
-#include "HomePage.hpp" // Include HomePage header to navigate back to HomePage
+#include <FL/fl_draw.H>
+#include "HomePage.hpp"
 #include "MainWindow.h"
 #include "SettingsWindow.hpp"
 
@@ -154,6 +155,21 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
         fl_message("Invalid menu selection.");
         break;
     }
+}
+
+void LobbyPage::applyStyles() {
+    // Apply styles for dark mode readiness
+    menuBar->color(FL_DARK3);      // Menu bar background
+    menuBar->textcolor(FL_WHITE); // Menu bar text color
+
+    chatDisplay->textfont(FL_HELVETICA); // Clean font for chat
+    chatDisplay->textsize(14);          // Slightly larger text
+    chatDisplay->color(FL_WHITE);
+    chatDisplay->textcolor(FL_BLACK);
+
+    // Future dark mode adjustments
+    //chatDisplay->color(FL_BLACK); // Uncomment for dark background
+    //chatDisplay->textcolor(FL_WHITE); // Uncomment for white text
 }
 
 

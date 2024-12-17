@@ -21,15 +21,17 @@ public:
     void hostServer(const std::string& ip, const std::string& username);
     void joinServer(const std::string& ip, const std::string& username);
     void Update();  // Network update
-    void sendMessage(const std::string& message);  // Send a message to the server
-    void receiveMessages();  // Helper function to process received messages
+    void sendMessage(const std::string& message);
+    void receiveMessages(); 
     void setUsername(const std::string& user) { username = user; }
+
+    void applyStyles();
 
 private:
     // Widgets
     Fl_Menu_Bar* menuBar;
-    Fl_Scroll* scrollArea;  // For chat display and input area
-    Fl_Text_Display* chatDisplay;  // Display for chat history
+    Fl_Scroll* scrollArea;  
+    Fl_Text_Display* chatDisplay;  
     Fl_Text_Buffer* chatBuffer;
     Fl_Input* messageInput;
     Fl_Button* sendButton;
