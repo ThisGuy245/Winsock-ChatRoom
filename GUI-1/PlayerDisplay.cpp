@@ -28,6 +28,7 @@ void PlayerDisplay::clear() {
         delete playerBox;               // Free memory
     }
     playerBoxes.clear();
+    playerStatus.clear();
     redraw();  // Refresh the widget
 }
 
@@ -47,6 +48,7 @@ void PlayerDisplay::addPlayer(const std::string& username) {
 
     scrollArea->add(playerBox);   // Add to scroll area
     playerBoxes.push_back(playerBox);  // Add to internal list
+    playerStatus.push_back({ username, true });  // Player is connected initially
     redraw();
 }
 
@@ -63,6 +65,32 @@ void PlayerDisplay::removePlayer(const std::string& playerName) {
         playerBoxes.erase(it);
         delete boxToRemove;
         updateLayout();  // Adjust layout after removal
+
+        // Also remove from the playerStatus vector
+        playerStatus.erase(std::remove_if(playerStatus.begin(), playerStatus.end(),
+            [&playerName](const std::pair<std::string, bool>& p) {
+                return p.first == playerName;
+            }), playerStatus.end());
+    }
+}
+
+// Update the player's connection status
+void PlayerDisplay::updatePlayerStatus(const std::string& username, bool isConnected) {
+    for (size_t i = 0; i < playerStatus.size(); ++i) {
+        if (playerStatus[i].first == username) {
+            playerStatus[i].second = isConnected;
+
+            // Optionally, change color based on connection status
+            if (isConnected) {
+                playerBoxes[i]->labelcolor(FL_GREEN);  // Green for connected
+            }
+            else {
+                playerBoxes[i]->labelcolor(FL_RED);  // Red for disconnected
+            }
+
+            playerBoxes[i]->redraw();
+            break;
+        }
     }
 }
 
@@ -76,4 +104,3 @@ void PlayerDisplay::updateLayout() {
     }
     redraw();
 }
-

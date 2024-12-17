@@ -12,6 +12,7 @@
 #include <string>
 #include "ClientSocket.h"
 #include "ServerSocket.h"
+#include "PlayerDisplay.hpp"
 
 class LobbyPage : public Fl_Group {
 public:
@@ -39,6 +40,8 @@ private:
     // Network connections
     ClientSocket* client;
     ServerSocket* server;
+
+    PlayerDisplay* playerDisplay;
 
     std::string username;
 

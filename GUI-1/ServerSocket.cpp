@@ -4,6 +4,9 @@
 #include "ServerSocket.h"
 #include "ClientSocket.h"
 
+#include "PlayerDisplay.hpp"
+
+PlayerDisplay* globalPlayerDisplay = nullptr;
 
 ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
 {
@@ -82,62 +85,73 @@ std::shared_ptr<ClientSocket> ServerSocket::accept()
 
 //needs to be on tick constatnly running
 void ServerSocket::handleClientConnections() {
-	// Accept new client connections
-	std::shared_ptr<ClientSocket> client = accept();
-	if (client) {
-		printf("Client Connected!\n");
+    // Accept new client connections
+    std::shared_ptr<ClientSocket> client = accept();
+    if (client) {
+        printf("Client Connected!\n");
 
-		// Request username from the client
-		std::string username;
-		if (client->receive(username)) {
-			client->setUsername(username);
-			printf("Username received: %s\n", username.c_str());
+        // Request username from the client
+        std::string username;
+        if (client->receive(username)) {
+            client->setUsername(username);
+            printf("Username received: %s\n", username.c_str());
 
-			std::string joinMessage = username + " has joined the server";
-			for (size_t j = 0; j < clients.size(); ++j) {
-				clients[j]->send(joinMessage);
-			}
-		}
-		else {
-			printf("Failed to receive username from client.\n");
-		}
+            // Add the player to the global player display
+            if (globalPlayerDisplay) {
+                globalPlayerDisplay->addPlayer(username);
+            }
 
-		// Add new client to the list
-		clients.push_back(client);
-	}
+            // Broadcast the join message to other clients
+            std::string joinMessage = "[SERVER]: " + username + " has joined the server";
+            for (size_t j = 0; j < clients.size(); ++j) {
+                clients[j]->send(joinMessage);
+            }
+        }
+        else {
+            printf("Failed to receive username from client.\n");
+        }
 
-	// Handle messages from connected clients
-	for (size_t i = 0; i < clients.size(); ++i) {
-		std::string message;
+        // Add new client to the list
+        clients.push_back(client);
+    }
 
-		if (clients[i]->receive(message)) {
-			const std::string& username = clients[i]->getUsername();
-			printf("Message received from %s: %s\n", username.c_str(), message.c_str());
+    // Handle messages from connected clients
+    for (size_t i = 0; i < clients.size(); ++i) {
+        std::string message;
 
-			// Broadcast the message to all clients
-			std::string broadcastMessage = username + ": " + message;
-			for (size_t j = 0; j < clients.size(); ++j) {
-				if (i != j) {
-					clients[j]->send(broadcastMessage);
-				}
-			}
-		}
-		else if (clients[i]->closed()) {
-			// Client disconnected, send "has disconnected" message to others
-			const std::string& username = clients[i]->getUsername();
-			std::string disconnectMessage = username + " has disconnected";
+        if (clients[i]->receive(message)) {
+            const std::string& username = clients[i]->getUsername();
+            printf("Message received from %s: %s\n", username.c_str(), message.c_str());
 
-			// Broadcast to other clients
-			for (size_t j = 0; j < clients.size(); ++j) {
-				if (i != j) {
-					clients[j]->send(disconnectMessage);
-				}
-			}
+            // Broadcast the message to all clients
+            std::string broadcastMessage = username + ": " + message;
+            for (size_t j = 0; j < clients.size(); ++j) {
+                if (i != j) {
+                    clients[j]->send(broadcastMessage);
+                }
+            }
+        }
+        else if (clients[i]->closed()) {
+            // Client disconnected
+            const std::string& username = clients[i]->getUsername();
+            std::string disconnectMessage = "[SERVER]: " + username + " has disconnected";
 
-			// Remove client from the list
-			printf("%s has disconnected\n", username.c_str());
-			clients.erase(clients.begin() + i);
-			i--;  // Adjust the index after removal to avoid skipping a client
-		}
-	}
+            // Remove player from the display
+            if (globalPlayerDisplay) {
+                globalPlayerDisplay->removePlayer(username);
+            }
+
+            // Broadcast to other clients
+            for (size_t j = 0; j < clients.size(); ++j) {
+                if (i != j) {
+                    clients[j]->send(disconnectMessage);
+                }
+            }
+
+            // Remove client from the list
+            printf("%s has disconnected\n", username.c_str());
+            clients.erase(clients.begin() + i);
+            i--;  // Adjust the index after removal to avoid skipping a client
+        }
+    }
 }

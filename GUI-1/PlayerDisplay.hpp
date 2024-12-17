@@ -9,17 +9,21 @@
 
 class PlayerDisplay : public Fl_Group {
 private:
-    Fl_Scroll* scrollArea;                // Scrollable area for player names
-    std::vector<Fl_Box*> playerBoxes;     // List of player name boxes
+    Fl_Scroll* scrollArea;
+    std::vector<Fl_Box*> playerBoxes;  // List of player display boxes
+    std::vector<std::pair<std::string, bool>> playerStatus; // Player and connection status
 
 public:
     PlayerDisplay(int X, int Y, int W, int H);
     ~PlayerDisplay();
 
-    void clear();                          // Clears all players from display
-    void addPlayer(const std::string& username);  // Adds a player to the display
-    void removePlayer(const std::string& playerName);  // Removes a player by name
-    void updateLayout();                   // Reorganizes layout after removal
+    void addPlayer(const std::string& username);
+    void removePlayer(const std::string& username);
+    void updatePlayerStatus(const std::string& username, bool isConnected);
+    void clear();  // Clears the display
+
+private:
+    void updateLayout();  // Adjusts layout after player removal
 };
 
 #endif // PLAYERDISPLAY_HPP

@@ -60,6 +60,10 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
         }
         }, this);
 
+    // Initialize player display
+    playerDisplay = new PlayerDisplay(X + W - 200, Y + 30, 180, H - 30);
+
+
     end();
     resizable(scrollArea);
 }
@@ -80,7 +84,7 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
 
     client = new ClientSocket(ip, 12345, username);  // Client also joins the server
     // Announce the client joining
-    chatBuffer->append((username + " has joined the server\n").c_str());
+    chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
 }
 
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {

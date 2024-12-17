@@ -5,6 +5,10 @@
 #include <memory>
 #include <vector>
 #include "ClientSocket.h"
+#include "PlayerDisplay.hpp"  // Include the header where PlayerDisplay is declared
+
+// Declaration of globalPlayerDisplay to be used across multiple files
+extern PlayerDisplay* globalPlayerDisplay;
 
 struct ServerSocket
 {
