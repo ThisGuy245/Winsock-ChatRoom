@@ -9,7 +9,6 @@
 #include "SettingsWindow.hpp"
 #include "AboutWindow.h"
 
-
 LobbyPage::LobbyPage(int X, int Y, int W, int H)
     : Fl_Group(X, Y, W, H), client(nullptr), server(nullptr) {
     begin();
@@ -66,10 +65,18 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     resizable(scrollArea);
 }
 
-
 LobbyPage::~LobbyPage() {
     delete client;
     delete server;
+}
+
+void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
+    menuBar->resize(0, 0, W, 30);
+    scrollArea->resize(0, 30, W, H - 30);
+    chatDisplay->resize(10, 10, W - 20, H - 120);
+    messageInput->resize(W / 2 - 150, H - 90, 300, 30);
+    sendButton->resize(W / 2 - 50, H - 50, 100, 30);
+    playerDisplay->resize(X + W - 200, Y + 30, 180, H - 30);
 }
 
 void LobbyPage::hostServer(const std::string& ip, const std::string& username) {

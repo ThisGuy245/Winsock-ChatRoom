@@ -27,6 +27,7 @@ public:
     void setUsername(const std::string& user) { username = user; }
     void clientLeft(const std::string& username);
     void applyStyles();
+    void resizeWidgets(int X, int Y, int W, int H); // Resize widgets
 
 private:
     // Widgets

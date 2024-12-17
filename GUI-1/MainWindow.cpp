@@ -38,6 +38,9 @@ MainWindow::MainWindow(int width, int height)
 
     timer.setUserData(this);
     timer.start();
+
+    // Set the minimum window size
+    size_range(750, 500, 10000, 10000);
 }
 
 // Destructor: Cleans up dynamically allocated pages
@@ -57,6 +60,7 @@ void MainWindow::resize(int X, int Y, int W, int H) {
     }
     if (lobbyPage) {
         lobbyPage->resize(0, 0, W, H);
+        lobbyPage->resizeWidgets(0, 0, W, H); // Resize the widgets inside LobbyPage
     }
 }
 
