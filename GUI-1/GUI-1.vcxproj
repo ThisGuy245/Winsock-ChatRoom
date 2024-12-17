@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AboutWindow.cpp" />
     <ClCompile Include="ChatData.cpp" />
     <ClCompile Include="ClientSocket.cpp" />
     <ClCompile Include="fltk\src\Fl_Generic_Image.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="SettingsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AboutWindow.h" />
     <ClInclude Include="ChatData.hpp" />
     <ClInclude Include="ClientSocket.h" />
     <ClInclude Include="GameManager.h" />

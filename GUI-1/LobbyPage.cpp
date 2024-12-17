@@ -7,6 +7,7 @@
 #include "HomePage.hpp"
 #include "MainWindow.h"
 #include "SettingsWindow.hpp"
+#include "AboutWindow.h"
 
 LobbyPage::LobbyPage(int X, int Y, int W, int H)
     : Fl_Group(X, Y, W, H), client(nullptr), server(nullptr) {
@@ -16,10 +17,9 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     menuBar = new Fl_Menu_Bar(0, 0, W, 30);
     menuBar->add("Server/Disconnect", FL_CTRL + 'd', menuCallback, (void*)this);
     menuBar->add("Server/Quit", FL_CTRL + 'q', menuCallback, (void*)this);
-
     menuBar->add("Settings/Preferences", FL_CTRL + 'p', menuCallback, (void*)this);
-
     menuBar->add("About/Application Info", FL_CTRL + 'a', menuCallback, (void*)this);
+
 
     // Create a scrollable area for chat history and message input
     scrollArea = new Fl_Scroll(0, 30, W, H - 30);
@@ -122,8 +122,11 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
 
     MainWindow* mainWindow = dynamic_cast<MainWindow*>(page->parent());
 
-    switch (menu->value()) {
-    case 1: // Disconnect
+    // Get the index of the selected menu item
+    int menu_index = menu->value();  // This is the index, not the menu item value
+
+    switch (menu_index) {
+    case 1: {  // Server/Disconnect
         if (page->client || page->server) {
             delete page->client;
             delete page->server;
@@ -136,26 +139,35 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
             mainWindow->switch_to_home(nullptr, mainWindow);
         }
         break;
+    }
 
-    case 2: // Quit
+    case 2: {  // Server/Quit
         exit(0);
         break;
+    }
 
-    case 5: { // Settings
+    case 5: {  // Settings
         SettingsWindow* settings = new SettingsWindow(400, 250, "Settings");
         settings->show();
         break;
     }
 
-    case 6: // About
-        fl_message("About this app: Simple Chat App.");
-        break;
-
-    default:
-        fl_message("Invalid menu selection.");
+    case 8: {  // About
+        AboutWindow* about = new AboutWindow(400, 250, "About");
+        about->show();
         break;
     }
+
+    default: {
+        int menu_index = menu->value();  // This is the index of the selected menu item
+        fl_message("Menu item selected with index: %d", menu_index);  // Print the selected index
+
+        break;
+    }
+    }
 }
+
+
 
 void LobbyPage::applyStyles() {
     // Apply styles for dark mode readiness

@@ -72,6 +72,9 @@
     <ClCompile Include="SettingsWindow.cpp">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="AboutWindow.cpp">
+      <Filter>Source Files\GUI\Pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainWindow.h">
@@ -111,6 +114,9 @@
       <Filter>Source Files\GUI\Pages</Filter>
     </ClInclude>
     <ClInclude Include="SettingsWindow.hpp">
+      <Filter>Source Files\GUI\Pages</Filter>
+    </ClInclude>
+    <ClInclude Include="AboutWindow.h">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClInclude>
   </ItemGroup>
