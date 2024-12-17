@@ -28,7 +28,7 @@ public:
     void clientLeft(const std::string& username);
     void applyStyles();
     void resizeWidgets(int X, int Y, int W, int H); // Resize widgets
-
+    void changeUsername(const std::string& newUsername);
 private:
     // Widgets
     Fl_Menu_Bar* menuBar;

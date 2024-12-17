@@ -181,6 +181,17 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     }
 }
 
+void LobbyPage::changeUsername(const std::string& newUsername) {
+    if (client) {
+        // Send the new username to the server with a special prefix
+        std::string message = "/change_username " + newUsername;
+        client->send(message);
+        chatBuffer->append(("You changed your username to: " + newUsername + "\n").c_str());
+
+        // Update the local username
+        this->username = newUsername;
+    }
+}
 
 
 void LobbyPage::applyStyles() {

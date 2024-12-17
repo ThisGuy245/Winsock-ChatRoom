@@ -29,7 +29,7 @@ void SettingsWindow::setup_ui() {
     Fl_Box* resolution_label = new Fl_Box(20, 120, 100, 30, "Resolution:");
     resolution_choice = new Fl_Choice(130, 120, 200, 30);
     resolution_choice->add("800x600|1024x768|1280x720|1920x1080|Custom");
-    resolution_choice->value(2); // Set default to 1920x1080
+    resolution_choice->value(2); // Set default to 1280x720
 
     // Apply button
     apply_button = new Fl_Button(50, 180, 100, 30, "Apply");
@@ -37,7 +37,7 @@ void SettingsWindow::setup_ui() {
     apply_button->labelcolor(FL_WHITE);
     apply_button->callback([](Fl_Widget*, void* data) {
         auto* settings = static_cast<SettingsWindow*>(data);
-        settings->apply_resolution();
+        settings->apply_changes();  // Apply all settings
         }, this);
 
     // Close button
@@ -50,6 +50,18 @@ void SettingsWindow::setup_ui() {
         }, this);
 }
 
+void SettingsWindow::apply_changes() {
+    // Apply resolution changes
+    apply_resolution();
+
+    // Handle username change
+    if (!mainWindow) return;
+
+    const char* newUsername = username_input->value();
+    if (newUsername && *newUsername) { // Check if input is not empty
+        lobbyPage->changeUsername(newUsername); // Call MainWindow method to handle username change
+    }
+}
 
 void SettingsWindow::apply_resolution() {
     if (!mainWindow) return;
@@ -64,20 +76,18 @@ void SettingsWindow::apply_resolution() {
     case 2: width = 1280; height = 720; break;
     case 3: width = 1920; height = 1080; break;
     case 4: // Custom - Retain current resolution
-        width = mainWindow->w(); // Get current MainWindow width
-        height = mainWindow->h(); // Get current MainWindow height
+        width = mainWindow->w();
+        height = mainWindow->h();
         break;
     }
 
-    // Apply the resolution
     mainWindow->setResolution(width, height);
 
-    // Check if the resolution is "Custom"
+    // Set dropdown to "Custom" if resolution doesn't match predefined ones
     if (!((width == 800 && height == 600) ||
         (width == 1024 && height == 768) ||
         (width == 1280 && height == 720) ||
         (width == 1920 && height == 1080))) {
-        resolution_choice->value(4); // Set dropdown to "Custom"
+        resolution_choice->value(4);
     }
 }
-
