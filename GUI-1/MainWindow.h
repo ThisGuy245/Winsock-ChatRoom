@@ -18,6 +18,9 @@ public:
     MainWindow(int width, int height);
     ~MainWindow();
 
+
+    void setResolution(int width, int height);
+
     LobbyPage* getLobbyPage() const;
     static void switch_to_home(Fl_Widget* widget, void* userdata);
     static void switch_to_lobby(Fl_Widget* widget, void* userdata);

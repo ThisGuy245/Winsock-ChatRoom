@@ -78,6 +78,12 @@ void MainWindow::onTick(void* userdata) {
         }, userdata);
 }
 
+void MainWindow::setResolution(int width, int height) {
+    this->size(width, height); // Resizes the window
+    this->redraw();
+}
+
+
 // Getter: Returns the LobbyPage instance
 LobbyPage* MainWindow::getLobbyPage() const {
     return lobbyPage;
