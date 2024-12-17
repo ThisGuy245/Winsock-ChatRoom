@@ -91,6 +91,11 @@ void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     chatBuffer->append((username + " has joined the server\n").c_str());
 }
 
+void LobbyPage::clientLeft(const std::string& username) {
+    chatBuffer->append((username + " has left the server\n").c_str());
+}
+
+
 void LobbyPage::sendMessage(const std::string& message) {
     if (client) {
         client->send(message);  // Send the message, not the username

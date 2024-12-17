@@ -68,23 +68,27 @@ void ClientSocket::send(const std::string& message) {
     }
 }
 
+// ClientSocket::receive()
 bool ClientSocket::receive(std::string& message) {
     char buffer[512] = { 0 };
     int bytes = ::recv(m_socket, buffer, sizeof(buffer) - 1, 0);
+
     if (bytes == SOCKET_ERROR) {
         if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            m_closed = true;
+            m_closed = true;  // Client is disconnected
             return false;
         }
         return false;
     }
-    else if (bytes == 0) {
+    else if (bytes == 0) {  // Connection closed by the peer
         m_closed = true;
         return false;
     }
+
     message.assign(buffer, bytes);
     return true;
 }
+
 
 bool ClientSocket::closed() {
     return m_closed;

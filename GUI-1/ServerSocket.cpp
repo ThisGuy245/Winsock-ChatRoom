@@ -92,16 +92,24 @@ void ServerSocket::handleClientConnections() {
 		if (client->receive(username)) {
 			client->setUsername(username);
 			printf("Username received: %s\n", username.c_str());
+
+			std::string joinMessage = username + " has joined the server";
+			for (size_t j = 0; j < clients.size(); ++j) {
+				clients[j]->send(joinMessage);
+			}
 		}
 		else {
 			printf("Failed to receive username from client.\n");
 		}
+
+		// Add new client to the list
 		clients.push_back(client);
 	}
 
 	// Handle messages from connected clients
 	for (size_t i = 0; i < clients.size(); ++i) {
 		std::string message;
+
 		if (clients[i]->receive(message)) {
 			const std::string& username = clients[i]->getUsername();
 			printf("Message received from %s: %s\n", username.c_str(), message.c_str());
@@ -113,6 +121,23 @@ void ServerSocket::handleClientConnections() {
 					clients[j]->send(broadcastMessage);
 				}
 			}
+		}
+		else if (clients[i]->closed()) {
+			// Client disconnected, send "has disconnected" message to others
+			const std::string& username = clients[i]->getUsername();
+			std::string disconnectMessage = username + " has disconnected";
+
+			// Broadcast to other clients
+			for (size_t j = 0; j < clients.size(); ++j) {
+				if (i != j) {
+					clients[j]->send(disconnectMessage);
+				}
+			}
+
+			// Remove client from the list
+			printf("%s has disconnected\n", username.c_str());
+			clients.erase(clients.begin() + i);
+			i--;  // Adjust the index after removal to avoid skipping a client
 		}
 	}
 }
