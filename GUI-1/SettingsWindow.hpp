@@ -1,16 +1,20 @@
 #ifndef SETTINGSWINDOW_HPP
 #define SETTINGSWINDOW_HPP
 
+// FLTK 
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Button.H>
+
+// My Pages
 #include "MainWindow.h"
+#include "LobbyPage.hpp"
 
 class SettingsWindow : public Fl_Window {
 public:
-    SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow);
+    SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow, LobbyPage* lobbyPage);
     ~SettingsWindow();
 
     void apply_resolution();
@@ -24,6 +28,7 @@ private:
     Fl_Button* close_button;        // Close button
 
     MainWindow* mainWindow;
+    LobbyPage* lobbyPage;
 
     void setup_ui();                // Internal function to set up UI
 };

@@ -5,7 +5,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/fl_draw.H>
 
-SettingsWindow::SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow)
+SettingsWindow::SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow, LobbyPage* lobbyPage)
     : Fl_Window(width, height, title), mainWindow(mainWindow) { // Pass MainWindow instance
     setup_ui();
     this->end(); // Finalize the window
@@ -59,7 +59,7 @@ void SettingsWindow::apply_changes() {
 
     const char* newUsername = username_input->value();
     if (newUsername && *newUsername) { // Check if input is not empty
-        lobbyPage->changeUsername(newUsername); // Call MainWindow method to handle username change
+        lobbyPage->changeUsername(newUsername); // Call lobbyPage method to handle username change
     }
 }
 

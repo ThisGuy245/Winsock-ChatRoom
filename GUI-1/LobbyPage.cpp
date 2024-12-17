@@ -161,7 +161,7 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     }
 
     case 5: {  // Settings
-        SettingsWindow* settings = new SettingsWindow(400, 250, "Settings", mainWindow);
+        SettingsWindow* settings = new SettingsWindow(400, 250, "Settings", mainWindow, page);
         settings->show();
         break;
     }
