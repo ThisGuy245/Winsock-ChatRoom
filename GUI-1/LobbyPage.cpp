@@ -5,7 +5,7 @@
 #include <FL/Fl_Scroll.H>
 #include "HomePage.hpp" // Include HomePage header to navigate back to HomePage
 #include "MainWindow.h"
-
+#include "SettingsWindow.hpp"
 
 LobbyPage::LobbyPage(int X, int Y, int W, int H)
     : Fl_Group(X, Y, W, H), client(nullptr), server(nullptr) {
@@ -140,9 +140,11 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
         exit(0);
         break;
 
-    case 5: // Settings
-        fl_message("Settings preferences window would open here.");
+    case 5: { // Settings
+        SettingsWindow* settings = new SettingsWindow(400, 250, "Settings");
+        settings->show();
         break;
+    }
 
     case 6: // About
         fl_message("About this app: Simple Chat App.");

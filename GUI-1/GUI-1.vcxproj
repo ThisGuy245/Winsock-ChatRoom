@@ -145,6 +145,7 @@
     <ClCompile Include="ServerSocket.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="SettingsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChatData.hpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="ServerSocket.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="SettingsWindow.hpp" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>

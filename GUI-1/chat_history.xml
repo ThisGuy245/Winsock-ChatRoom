@@ -1,11 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<chat>
-	<message>
-		<user>Host</user>
-		<content>Welcome to the chat!</content>
-	</message>
-	<message>
-		<user>Player1</user>
-		<content>Hello!</content>
-	</message>
-</chat>
+<Settings>
+	<Setting key="username" value="JohnDoe" />
+	<Setting key="resolution_index" value="2" />
+	<Setting key="dark_mode" value="1" />
+</Settings>
