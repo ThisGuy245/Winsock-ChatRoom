@@ -137,11 +137,11 @@
     <ClCompile Include="ChatData.cpp" />
     <ClCompile Include="ClientSocket.cpp" />
     <ClCompile Include="fltk\src\Fl_Generic_Image.cpp" />
-    <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="HomePage.cpp" />
     <ClCompile Include="LobbyPage.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyWidget.cpp" />
+    <ClCompile Include="PlayerDisplay.cpp" />
     <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="ServerSocket.cpp" />
     <ClCompile Include="Settings.cpp" />
@@ -152,10 +152,10 @@
     <ClInclude Include="AboutWindow.h" />
     <ClInclude Include="ChatData.hpp" />
     <ClInclude Include="ClientSocket.h" />
-    <ClInclude Include="GameManager.h" />
     <ClInclude Include="HomePage.hpp" />
     <ClInclude Include="LobbyPage.hpp" />
     <ClInclude Include="MyWidget.h" />
+    <ClInclude Include="PlayerDisplay.hpp" />
     <ClInclude Include="pugiconfig.hpp" />
     <ClInclude Include="pugixml.hpp" />
     <ClInclude Include="ServerSocket.h" />
