@@ -42,8 +42,10 @@ void SettingsWindow::setup_ui() {
     apply_button->color(FL_DARK_GREEN);
     apply_button->labelcolor(FL_WHITE);
     apply_button->callback([](Fl_Widget*, void* data) {
+        Fl_Window* window = (Fl_Window*)data;
         auto* settings = static_cast<SettingsWindow*>(data);
         settings->apply_changes();  // Apply all settings
+        window->hide();
         }, this);
 
     // Close button

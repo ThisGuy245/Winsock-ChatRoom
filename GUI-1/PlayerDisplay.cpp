@@ -1,123 +1,92 @@
 #include "PlayerDisplay.hpp"
 #include <FL/fl_draw.H>
 #include <algorithm>
+#include <cstdio> // For printf debugging
 
-// Constructor: Initializes the scrollable player display area
+// Constructor: Initializes the player display with a grey side panel
 PlayerDisplay::PlayerDisplay(int X, int Y, int W, int H)
-    : Fl_Group(X, Y, W, H) {
+    : Fl_Group(X, Y, W, H), sidePanel(nullptr) {
     begin();
 
-    // Create the scrollable area
-    scrollArea = new Fl_Scroll(X, Y + 20, W, H - 20);  // Adjust scroll area to make room for the "Players:" label
-    scrollArea->type(FL_VERTICAL);  // Enable vertical scrolling
-
-    // Create a static label for "Players:"
-    playersLabel = new Fl_Box(X + 10, Y, W - 20, 20, "Players:");
-    playersLabel->labelfont(FL_HELVETICA_BOLD);
-    playersLabel->labelsize(16);
-    playersLabel->labelcolor(FL_WHITE);
+    // Create the side panel (grey background)
+    sidePanel = new Fl_Box(X, Y, W, H);
+    sidePanel->box(FL_FLAT_BOX);
+    sidePanel->color(FL_DARK3); // Grey color
+    sidePanel->label(nullptr);
 
     end();
-    resizable(scrollArea);  // Allow resizing of scrollArea
 }
 
 // Destructor: Cleans up dynamically allocated boxes
 PlayerDisplay::~PlayerDisplay() {
-    clear();           // Remove all player boxes
-    delete scrollArea; // Delete the scroll area
-    delete playersLabel; // Delete the players label
-}
-
-// Clear function: Removes all player widgets
-void PlayerDisplay::clear() {
     for (auto playerBox : playerBoxes) {
-        scrollArea->remove(playerBox);  // Remove from scroll area
-        delete playerBox;               // Free memory
+        remove(playerBox);
+        delete playerBox;
     }
     playerBoxes.clear();
-    playerStatus.clear();
-    redraw();  // Refresh the widget
+    delete sidePanel;
 }
 
 // Adds a player to the display
 void PlayerDisplay::addPlayer(const std::string& username) {
-    if (std::find_if(playerStatus.begin(), playerStatus.end(),
-        [&username](const auto& status) { return status.first == username; }) != playerStatus.end()) {
-        return;  // Player already exists
+    // Debugging output
+    printf("Adding player: %s\n", username.c_str());
+
+    // Check if the player already exists
+    if (std::any_of(playerBoxes.begin(), playerBoxes.end(), [&](Fl_Box* box) {
+        return box->label() && username == box->label();
+        })) {
+        printf("Player already exists: %s\n", username.c_str());
+        return;
     }
 
-    Fl_Box* playerBox = new Fl_Box(
-        scrollArea->x() + 10,              // X position
-        scrollArea->y() + 10 + (20 * playerBoxes.size()),  // Y position
-        scrollArea->w() - 20,              // Width
-        20,                                // Height
-        username.c_str());                 // Player's name
-
-    playerBox->box(FL_NO_BOX);
+    // Create a new player box
+    Fl_Box* playerBox = new Fl_Box(x() + 10, y() + 10 + (20 * playerBoxes.size()),
+        w() - 20, 20, username.c_str());
+    playerBox->box(FL_FLAT_BOX);
     playerBox->labelfont(FL_HELVETICA);
     playerBox->labelsize(14);
+    playerBox->labelcolor(FL_WHITE); // White text on grey background
+    playerBox->color(FL_DARK2);      // Slightly lighter grey
 
-    scrollArea->add(playerBox);   // Add to the scrollable area
-    playerBoxes.push_back(playerBox);  // Track the player box
-    playerStatus.push_back({ username, true });  // Add player as connected
+    // Add the player box and update layout
+    playerBoxes.push_back(playerBox);
+    add(playerBox);
+    updateLayout();
     redraw();
 }
 
 // Removes a player by name
 void PlayerDisplay::removePlayer(const std::string& username) {
-    auto it = std::find_if(playerStatus.begin(), playerStatus.end(),
-        [&username](const auto& status) { return status.first == username; });
+    auto it = std::find_if(playerBoxes.begin(), playerBoxes.end(), [&](Fl_Box* box) {
+        return box->label() && username == box->label();
+        });
 
-    if (it != playerStatus.end()) {
-        size_t index = std::distance(playerStatus.begin(), it);
-        Fl_Box* boxToRemove = playerBoxes[index];
+    if (it != playerBoxes.end()) {
+        Fl_Box* boxToRemove = *it;
 
-        scrollArea->remove(boxToRemove);
-        playerBoxes.erase(playerBoxes.begin() + index);
+        // Debugging output
+        printf("Removing player: %s\n", username.c_str());
+
+        remove(boxToRemove);
+        playerBoxes.erase(it);
         delete boxToRemove;
 
-        playerStatus.erase(it);
         updateLayout();
+        redraw();
+    }
+    else {
+        printf("Player not found for removal: %s\n", username.c_str());
     }
 }
 
-
-// Update the player's connection status
-void PlayerDisplay::updatePlayerStatus(const std::string& username, bool isConnected) {
-    for (size_t i = 0; i < playerStatus.size(); ++i) {
-        if (playerStatus[i].first == username) {
-            playerStatus[i].second = isConnected;
-
-            // Optionally, change color based on connection status
-            if (isConnected) {
-                playerBoxes[i]->labelcolor(FL_GREEN);  // Green for connected
-            }
-            else {
-                playerBoxes[i]->labelcolor(FL_RED);  // Red for disconnected
-            }
-
-            playerBoxes[i]->redraw();
-            break;
-        }
-    }
-}
-
-// Updates the layout after player removal
+// Updates the layout of player boxes
 void PlayerDisplay::updateLayout() {
     int yOffset = 10;
     for (auto box : playerBoxes) {
-        box->resize(scrollArea->x() + 10, scrollArea->y() + yOffset,
-            scrollArea->w() - 20, 20);
-        yOffset += 20;
+        box->resize(x() + 10, y() + yOffset, w() - 20, 20);
+        yOffset += 30; // Adjust spacing between boxes
     }
     redraw();
 }
 
-// Get the current list of players
-std::vector<std::string> PlayerDisplay::getPlayers() {
-    std::vector<std::string> players;
-    for (const auto& player : playerStatus) {
-        players.push_back(player.first); // Add player name
-    }
-    return players;
-}

@@ -40,7 +40,7 @@ MainWindow::MainWindow(int width, int height)
     timer.start();
 
     // Set the minimum window size
-    size_range(750, 500, 10000, 10000);
+    size_range(800, 600, 10000, 10000);
 }
 
 // Destructor: Cleans up dynamically allocated pages

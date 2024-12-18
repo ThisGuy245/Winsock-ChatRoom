@@ -21,7 +21,7 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     menuBar->add("About/Application Info", FL_CTRL + 'a', menuCallback, (void*)this);
 
     // Create a scrollable area for chat history and message input
-    scrollArea = new Fl_Scroll(0, 30, W, H - 30);
+    scrollArea = new Fl_Scroll(0, 30, W - 20, H - 30);
     scrollArea->type(FL_VERTICAL);
 
     // Display area for chat history with a text buffer
@@ -60,7 +60,6 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
 
     // Initialize player display
     playerDisplay = new PlayerDisplay(X + W - 200, Y + 30, 180, H - 30);
-
     end();
     resizable(scrollArea);
 }
@@ -83,7 +82,7 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     this->username = username;
     server = new ServerSocket(12345);
 
-    chatBuffer->append("This is a buffer line\n");
+    chatBuffer->append("\n");
     chatBuffer->append("Server has been created\n");
 
     try {
@@ -93,15 +92,17 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     catch (const std::exception& e) {
         chatBuffer->append(("[ERROR]: Failed to initialize client: " + std::string(e.what()) + "\n").c_str());
     }
+    playerDisplay->addPlayer(username);
 }
 
 
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     this->username = username;  // Set the username for this session
     client = new ClientSocket(ip, 12345, username);  // Client joins the server
-    chatBuffer->append("This is a buffer line\n");
+    chatBuffer->append("\n");
     // Announce the client joining
     chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
+    playerDisplay->addPlayer(username);
 }
 
 void LobbyPage::clientLeft(const std::string& username) {
@@ -206,11 +207,6 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     }
     }
 }
-
-
-
-
-
 
 void LobbyPage::applyStyles() {
     // Apply styles for dark mode readiness
