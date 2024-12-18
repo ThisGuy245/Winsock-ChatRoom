@@ -8,12 +8,6 @@ PlayerDisplay::PlayerDisplay(int X, int Y, int W, int H)
     : Fl_Group(X, Y, W, H), sidePanel(nullptr), disp(nullptr), tbuff(nullptr) {
     begin();
 
-    // Create the side panel (grey background)
-    sidePanel = new Fl_Box(X, Y, W / 2, H - 40); // Adjusted width to half
-    sidePanel->box(FL_FLAT_BOX);
-    sidePanel->color(FL_DARK3); // Grey color
-    sidePanel->label(nullptr);
-
     // Create the text display for player list
     disp = new Fl_Text_Display(X + W / 2, Y, W / 2, H - 40); // Adjusted position and width
     tbuff = new Fl_Text_Buffer(); // Text buffer

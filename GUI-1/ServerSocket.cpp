@@ -47,8 +47,6 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
     }
 }
 
-PlayerDisplay* playerDisplay;
-
 // Destructor: Cleans up the socket
 ServerSocket::~ServerSocket()
 {

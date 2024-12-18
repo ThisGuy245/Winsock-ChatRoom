@@ -25,7 +25,7 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     scrollArea->type(FL_VERTICAL);
 
     // Display area for chat history with a text buffer
-    chatDisplay = new Fl_Text_Display(10, 10, (W - 20) / 2, H - 120); // Adjusted width to half
+    chatDisplay = new Fl_Text_Display(10, 10, (W - 200) / 2, H - 120); // Adjusted width to half
     chatBuffer = new Fl_Text_Buffer();
     chatDisplay->buffer(chatBuffer);
     chatDisplay->wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
@@ -72,17 +72,15 @@ LobbyPage::~LobbyPage() {
 void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
     menuBar->resize(0, 0, W, 30);
     scrollArea->resize(0, 30, W, H - 30);
-    chatDisplay->resize(10, 10, W - 20, H - 120);
+    chatDisplay->resize(10, 30, W - 130, H - 120);
     messageInput->resize(W / 2 - 150, H - 90, 300, 30);
     sendButton->resize(W / 2 - 50, H - 50, 100, 30);
-    playerDisplay->resize(X + W - 200, Y + 30, 180, H - 30);
+    playerDisplay->resize(W - 240, Y + 30, 240, H - 90);
 }
 
 void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     this->username = username;
     server = new ServerSocket(12345, playerDisplay);
-
-    chatBuffer->append("\n");
     chatBuffer->append("Server has been created\n");
 
     try {
@@ -98,8 +96,6 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     this->username = username;  // Set the username for this session
     client = new ClientSocket(ip, 12345, username);  // Client joins the server
-    chatBuffer->append("\n");
-    // Announce the client joining
     chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
 }
 
