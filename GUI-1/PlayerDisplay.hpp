@@ -16,10 +16,12 @@ public:
     void removePlayer(const std::string& username);
     void updateLayout();
 
-private:
     Fl_Box* sidePanel;
     Fl_Text_Display* disp;
     Fl_Text_Buffer* tbuff;
+
+private:
+
 };
 
 #endif // PLAYER_DISPLAY_HPP

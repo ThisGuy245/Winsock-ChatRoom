@@ -13,6 +13,11 @@
 #include "ClientSocket.h"
 #include "ServerSocket.h"
 #include "PlayerDisplay.hpp"
+#include "SettingsWindow.hpp" // Include SettingsWindow header after the forward declaration
+#include "AboutWindow.h"
+
+// Forward declaration for SettingsWindow class
+class SettingsWindow;
 
 class LobbyPage : public Fl_Group {
 public:
@@ -39,9 +44,10 @@ public:
     Fl_Button* sendButton;
 
     PlayerDisplay* playerDisplay;
-
     ClientSocket* client;
     ServerSocket* server;
+    SettingsWindow* settings;
+    AboutWindow* about;
 
 private:
     std::string username;

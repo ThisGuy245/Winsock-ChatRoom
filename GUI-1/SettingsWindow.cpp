@@ -19,7 +19,8 @@ SettingsWindow::SettingsWindow(int width, int height, const char* title, MainWin
 }
 
 // Destructor (no need for manual cleanup since FLTK manages widget memory)
-SettingsWindow::~SettingsWindow() {}
+SettingsWindow::~SettingsWindow() {
+}
 
 // Setup the UI components for the settings window
 void SettingsWindow::setup_ui() {
@@ -61,18 +62,21 @@ void SettingsWindow::setup_ui() {
 
 // Apply changes based on user input (resolution, dark mode, and username)
 void SettingsWindow::apply_changes() {
-    apply_resolution();  // Apply resolution change
-    apply_dark_mode();   // Apply dark mode theme
+    // Apply changes only if the lobbyPage is not null
+    if (lobbyPage) {
+        apply_resolution();
+        apply_dark_mode();
+        //lobbyPage->applyStyles();
 
-    const char* newUsername = username_input->value();
-    if (newUsername != "") {
-        printf(newUsername);
-        if (lobbyPage) {
-            lobbyPage->changeUsername(newUsername);  // Change username using lobbyPage
+        const char* newUsername = username_input->value();
+        if (newUsername && newUsername[0] != '\0') {
+            if (lobbyPage) {
+                lobbyPage->changeUsername(newUsername);  // Change username if lobbyPage is valid
+            }
         }
-        return;
     }
 }
+
 
 // Apply selected resolution to the main window
 void SettingsWindow::apply_resolution() {
@@ -93,37 +97,62 @@ void SettingsWindow::apply_resolution() {
 void SettingsWindow::apply_dark_mode() {
     bool isDarkMode = theme_toggle->value();
 
-    // Set global background and foreground colors
-    Fl::background(isDarkMode ? 45 : 240, isDarkMode ? 45 : 240, isDarkMode ? 45 : 240);
-    Fl::foreground(isDarkMode ? 255 : 0, isDarkMode ? 255 : 0, isDarkMode ? 255 : 0);
+    // Set global background and foreground colors for the main window
+    if (isDarkMode) {
+        Fl::background(45, 45, 45); // Dark background for main window
+        Fl::foreground(255, 255, 255); // White text
+    }
+    else {
+        Fl::background(240, 240, 240); // Light background
+        Fl::foreground(0, 0, 0); // Black text
+    }
+    mainWindow->redraw();  // Redraw the main window to apply changes
 
-    mainWindow->redraw();  // Redraw the main window
+    // Ensure lobbyPage is not nullptr before applying styles
+    if (!lobbyPage) return;
 
-    if (!lobbyPage) return;  // Ensure lobbyPage is not nullptr
-
-    // Apply dark mode to scroll area if available
+    // Apply dark/light mode styles to components in the lobby page
     if (lobbyPage->scrollArea) {
-        lobbyPage->scrollArea->color(fl_rgb_color(60, 60, 60));  // Dark grey
+        if (isDarkMode) {
+            lobbyPage->scrollArea->color(fl_rgb_color(60, 60, 60)); // Dark grey
+        }
+        else {
+            lobbyPage->scrollArea->color(fl_rgb_color(255, 255, 255)); // Light grey
+        }
         lobbyPage->scrollArea->redraw();
     }
 
-    // Apply dark mode to chat display if available
     if (lobbyPage->chatDisplay) {
-        lobbyPage->chatDisplay->color(fl_rgb_color(50, 50, 50));  // Dark grey
-        lobbyPage->chatDisplay->textcolor(FL_WHITE);              // White text
+        if (isDarkMode) {
+            lobbyPage->chatDisplay->color(fl_rgb_color(50, 50, 50)); // Dark grey
+            lobbyPage->chatDisplay->textcolor(FL_WHITE);  // White text
+        }
+        else {
+            lobbyPage->chatDisplay->color(fl_rgb_color(255, 255, 255)); // White background
+            lobbyPage->chatDisplay->textcolor(FL_BLACK);  // Black text
+        }
         lobbyPage->chatDisplay->redraw();
     }
 
-    // Apply dark mode to message input if available
     if (lobbyPage->messageInput) {
-        lobbyPage->messageInput->color(fl_rgb_color(45, 45, 45)); // Slightly darker grey
-        lobbyPage->messageInput->textcolor(FL_WHITE);            // White text
+        if (isDarkMode) {
+            lobbyPage->messageInput->color(fl_rgb_color(45, 45, 45)); // Dark grey
+            lobbyPage->messageInput->textcolor(FL_WHITE);  // White text
+        }
+        else {
+            lobbyPage->messageInput->color(fl_rgb_color(255, 255, 255)); // Light background
+            lobbyPage->messageInput->textcolor(FL_BLACK);  // Black text
+        }
         lobbyPage->messageInput->redraw();
     }
 
-    // Apply dark mode to player display if available
     if (lobbyPage->playerDisplay) {
-        lobbyPage->playerDisplay->color(fl_rgb_color(60, 60, 60));
+        if (isDarkMode) {
+            lobbyPage->playerDisplay->disp->color(fl_rgb_color(60, 60, 60)); // Dark grey
+        }
+        else {
+            lobbyPage->playerDisplay->disp->color(fl_rgb_color(255, 255, 255)); // Light background
+        }
         lobbyPage->playerDisplay->redraw();
     }
 }

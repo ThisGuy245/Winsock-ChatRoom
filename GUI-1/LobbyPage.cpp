@@ -10,7 +10,7 @@
 #include "AboutWindow.h"
 
 LobbyPage::LobbyPage(int X, int Y, int W, int H)
-    : Fl_Group(X, Y, W, H), client(nullptr), server(nullptr) {
+    : Fl_Group(X, Y, W, H), client(nullptr), server(nullptr), settings(nullptr), about(nullptr) {
     begin();
 
     // Create the Menu Bar at the top
@@ -159,8 +159,7 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
 
     MainWindow* mainWindow = dynamic_cast<MainWindow*>(page->parent());
 
-    // Get the index of the selected menu item
-    int menu_index = menu->value();  // This is the index, not the menu item value
+    int menu_index = menu->value();  // Get the index of the selected menu item
 
     switch (menu_index) {
     case 1: {  // Server/Disconnect
@@ -184,39 +183,32 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     }
 
     case 5: {  // Settings
-        SettingsWindow* settings = new SettingsWindow(400, 250, "Settings", mainWindow, page);
-        settings->show();
+        if (!page->settings) {  // Only create the settings window if it doesn't exist
+            page->settings = new SettingsWindow(400, 250, "Settings", mainWindow, page);
+            page->settings->show();
+        }
+        else {
+            page->settings->show(); // Ensure it's shown again
+        }
         break;
     }
 
     case 8: {  // About
-        AboutWindow* about = new AboutWindow(400, 250, "About");
-        about->show();
+        if (!page->about) {  // Check if About window exists
+            AboutWindow* about = new AboutWindow(400, 250, "About");
+            page->about = about;  // Store pointer to the about window
+            about->show();
+        }
+        else {
+            page->about->show(); // Ensure it's shown again
+        }
         break;
     }
 
     default: {
-        int menu_index = menu->value();  // This is the index of the selected menu item
-        fl_message("Menu item selected with index: %d", menu_index);  // Print the selected index
-
+        fl_message("Menu item selected with index: %d", menu_index);
         break;
     }
     }
 }
-
-void LobbyPage::applyStyles() {
-    // Apply styles for dark mode readiness
-    menuBar->color(FL_DARK3);      // Menu bar background
-    menuBar->textcolor(FL_WHITE); // Menu bar text color
-
-    chatDisplay->textfont(FL_HELVETICA); // Clean font for chat
-    chatDisplay->textsize(14);          // Slightly larger text
-    chatDisplay->color(FL_WHITE);
-    chatDisplay->textcolor(FL_BLACK);
-
-    // Future dark mode adjustments
-    //chatDisplay->color(FL_BLACK); // Uncomment for dark background
-    //chatDisplay->textcolor(FL_WHITE); // Uncomment for white text
-}
-
 
