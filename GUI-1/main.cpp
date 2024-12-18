@@ -14,16 +14,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Create the main window
     MainWindow* mainWindow = new MainWindow(800, 600);
+    mainWindow->show();
 
-    // Show the main window
-    mainWindow->show(argc, argv);
-
-    // Run the FLTK event loop
     int result = Fl::run();
-
-    // Clean up Winsock before exiting
     WSACleanup();
 
     return result;

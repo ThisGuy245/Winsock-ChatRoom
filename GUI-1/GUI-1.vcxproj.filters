@@ -129,5 +129,8 @@
     <Xml Include="chat_history.xml">
       <Filter>Resource Files</Filter>
     </Xml>
+    <Xml Include="settings.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

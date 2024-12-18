@@ -3,20 +3,25 @@
 #include "pugiconfig.hpp"
 #include "pugixml.hpp"
 
-struct Settings
+class Settings
 {
 public:
-	Settings(const std::string& _path);
-	~Settings();
+    Settings(const std::string& path);
+    ~Settings();
 
-	int getWidth();
-	void setWidth(int _width);
-	int getHeight();
-	void setHeight(int _height);
+    std::string getMode();
+    void setMode(const std::string& mode);
 
-	void testing();
+    int getWidth();
+    void setWidth(int width);
+
+    int getHeight();
+    void setHeight(int height);
+
+    void save(); // Save changes to the XML file
 
 private:
-	pugi::xml_document m_doc;
+    std::string m_path;          // Path to the XML file
+    pugi::xml_document m_doc;    // XML document object
 };
 
