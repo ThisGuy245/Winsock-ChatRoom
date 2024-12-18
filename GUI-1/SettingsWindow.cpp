@@ -2,6 +2,8 @@
 #include "MainWindow.h"
 #include "LobbyPage.hpp"
 
+#include <cstdio>
+
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Scroll.H>
@@ -33,7 +35,7 @@ void SettingsWindow::setup_ui() {
     Fl_Box* resolution_label = new Fl_Box(20, 120, 100, 30, "Resolution:");
     resolution_choice = new Fl_Choice(130, 120, 200, 30);
     resolution_choice->add("800x600|1024x768|1280x720|1920x1080|Custom");
-    resolution_choice->value(2); // Set default to 1280x720
+    resolution_choice->value(4); // Set default to Custom
 
     // Apply button
     apply_button = new Fl_Button(50, 180, 100, 30, "Apply");
@@ -59,14 +61,16 @@ void SettingsWindow::apply_changes() {
     apply_dark_mode(lobbyPage);
 
     const char* newUsername = username_input->value();
-    if (newUsername && *newUsername && lobbyPage) {
+    if (newUsername != "") {
+        printf(newUsername);
         lobbyPage->changeUsername(newUsername);
+        return;
     }
 }
 
 void SettingsWindow::apply_resolution() {
     int selected = resolution_choice->value();
-    int width = 1280, height = 720;
+    int width = 800, height = 600;
 
     switch (selected) {
     case 0: width = 800; height = 600; break;

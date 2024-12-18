@@ -80,17 +80,21 @@ void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
 }
 
 void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
-    this->username = username;  // Set the username for this session
+    this->username = username;
     server = new ServerSocket(12345);
 
-    // Announce the server creation
     chatBuffer->append("This is a buffer line\n");
     chatBuffer->append("Server has been created\n");
 
-    client = new ClientSocket(ip, 12345, username);  // Client also joins the server
-    // Announce the client joining
-    chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
+    try {
+        client = new ClientSocket(ip, 12345, username);
+        chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
+    }
+    catch (const std::exception& e) {
+        chatBuffer->append(("[ERROR]: Failed to initialize client: " + std::string(e.what()) + "\n").c_str());
+    }
 }
+
 
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     this->username = username;  // Set the username for this session
@@ -108,7 +112,6 @@ void LobbyPage::clientLeft(const std::string& username) {
 void LobbyPage::sendMessage(const std::string& message) {
     if (client) {
         client->send(message);  // Send the message, not the username
-        //chatBuffer->append((username + ": " + message + "\n").c_str());  // Send the username as part of the message
     }
 }
 
@@ -122,6 +125,29 @@ void LobbyPage::receiveMessages() {
         server->handleClientConnections();  // Handle incoming server-client connections
     }
 }
+
+void LobbyPage::changeUsername(const std::string& newUsername) {
+    if (!client) {
+        if (chatBuffer) {
+            chatBuffer->append("[ERROR]: No active client to change username.\n");
+        }
+        return;
+    }
+
+    try {
+        client->changeUsername(newUsername);  // Call ClientSocket's method
+        if (chatBuffer) {
+            chatBuffer->append(("You changed your username to: " + newUsername + "\n").c_str());
+        }
+    }
+    catch (const std::exception& e) {
+        if (chatBuffer) {
+            chatBuffer->append(("[ERROR]: Failed to change username: " + std::string(e.what()) + "\n").c_str());
+        }
+    }
+}
+
+
 
 // This is called every frame to keep the chat updated
 void LobbyPage::Update() {
@@ -181,26 +207,6 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     }
 }
 
-void LobbyPage::changeUsername(const std::string& newUsername) {
-    if (!client) {
-        if (chatBuffer) {
-            chatBuffer->append("[ERROR]: Cannot change username. Client is not connected.\n");
-        }
-        return;
-    }
-
-    try {
-        client->changeUsername(newUsername);  // Call ClientSocket's method
-        if (chatBuffer) {
-            chatBuffer->append(("You changed your username to: " + newUsername + "\n").c_str());
-        }
-    }
-    catch (const std::exception& e) {
-        if (chatBuffer) {
-            chatBuffer->append(("[ERROR]: Failed to change username: " + std::string(e.what()) + "\n").c_str());
-        }
-    }
-}
 
 
 

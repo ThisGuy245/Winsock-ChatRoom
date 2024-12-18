@@ -4,8 +4,11 @@
 #include <memory>
 #include <stdexcept>
 #include <WS2tcpip.h>
+#include "PlayerDisplay.hpp"
 
-struct ServerSocket;
+class ServerSocket;
+
+extern PlayerDisplay* globalPlayerDisplay;
 
 struct ClientSocket {
     ClientSocket(SOCKET socket);
@@ -23,7 +26,7 @@ struct ClientSocket {
     bool closed();
 
 private:
-    friend struct ServerSocket;
+    friend class ServerSocket;
     SOCKET m_socket;
     bool m_closed;
     std::string m_username;

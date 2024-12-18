@@ -39,47 +39,48 @@ void PlayerDisplay::clear() {
     redraw();  // Refresh the widget
 }
 
-// Adds a single player to the display
+// Adds a player to the display
 void PlayerDisplay::addPlayer(const std::string& username) {
-    // Create a new box for the player's name
+    if (std::find_if(playerStatus.begin(), playerStatus.end(),
+        [&username](const auto& status) { return status.first == username; }) != playerStatus.end()) {
+        return;  // Player already exists
+    }
+
     Fl_Box* playerBox = new Fl_Box(
-        scrollArea->x() + 10,              // X position relative to scrollArea
-        scrollArea->y() + 10 + (20 * playerBoxes.size()),  // Y position (next row)
+        scrollArea->x() + 10,              // X position
+        scrollArea->y() + 10 + (20 * playerBoxes.size()),  // Y position
         scrollArea->w() - 20,              // Width
         20,                                // Height
-        username.c_str());                 // Label (player's name)
+        username.c_str());                 // Player's name
 
     playerBox->box(FL_NO_BOX);
     playerBox->labelfont(FL_HELVETICA);
     playerBox->labelsize(14);
 
-    scrollArea->add(playerBox);   // Add to scroll area
-    playerBoxes.push_back(playerBox);  // Add to internal list
-    playerStatus.push_back({ username, true });  // Player is connected initially
+    scrollArea->add(playerBox);   // Add to the scrollable area
+    playerBoxes.push_back(playerBox);  // Track the player box
+    playerStatus.push_back({ username, true });  // Add player as connected
     redraw();
 }
 
 // Removes a player by name
-void PlayerDisplay::removePlayer(const std::string& playerName) {
-    auto it = std::find_if(playerBoxes.begin(), playerBoxes.end(),
-        [&playerName](Fl_Box* box) {
-            return playerName == box->label();
-        });
+void PlayerDisplay::removePlayer(const std::string& username) {
+    auto it = std::find_if(playerStatus.begin(), playerStatus.end(),
+        [&username](const auto& status) { return status.first == username; });
 
-    if (it != playerBoxes.end()) {
-        Fl_Box* boxToRemove = *it;
+    if (it != playerStatus.end()) {
+        size_t index = std::distance(playerStatus.begin(), it);
+        Fl_Box* boxToRemove = playerBoxes[index];
+
         scrollArea->remove(boxToRemove);
-        playerBoxes.erase(it);
+        playerBoxes.erase(playerBoxes.begin() + index);
         delete boxToRemove;
-        updateLayout();  // Adjust layout after removal
 
-        // Also remove from the playerStatus vector
-        playerStatus.erase(std::remove_if(playerStatus.begin(), playerStatus.end(),
-            [&playerName](const std::pair<std::string, bool>& p) {
-                return p.first == playerName;
-            }), playerStatus.end());
+        playerStatus.erase(it);
+        updateLayout();
     }
 }
+
 
 // Update the player's connection status
 void PlayerDisplay::updatePlayerStatus(const std::string& username, bool isConnected) {

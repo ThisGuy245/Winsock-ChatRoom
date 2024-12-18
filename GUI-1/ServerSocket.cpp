@@ -3,9 +3,6 @@
 #include <algorithm>
 #include <cstdio>
 
-// Global player display for managing connected players
-PlayerDisplay* globalPlayerDisplay = nullptr;
-
 // Constructor: Initializes Winsock and sets up the server socket
 ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
 {
@@ -90,25 +87,23 @@ void ServerSocket::closeAllClients()
 }
 
 // Handles all client connections
-void ServerSocket::handleClientConnections()
-{
+void ServerSocket::handleClientConnections() {
     // Accept new client connections
     std::shared_ptr<ClientSocket> client = accept();
     if (client) {
         printf("Client Connected!\n");
 
+        // Receive username upon connection
         std::string username;
         if (client->receive(username)) {
             client->setUsername(username);
             printf("Username received: %s\n", username.c_str());
 
-            if (globalPlayerDisplay) {
-                globalPlayerDisplay->addPlayer(username);
-            }
-
+            // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
         }
 
+        // Add the new client to the list
         clients.push_back(client);
     }
 
@@ -118,32 +113,15 @@ void ServerSocket::handleClientConnections()
             std::string message;
 
             if (c->receive(message)) {
-                const std::string& username = c->getUsername();
-
-                if (message.rfind("/change_username", 0) == 0) {
-                    std::string newUsername = message.substr(17);
-                    if (!newUsername.empty()) {
-                        std::string oldUsername = username;
-                        c->setUsername(newUsername);
-                        broadcastMessage("[SERVER]: " + oldUsername + " is now known as " + newUsername);
-
-                        if (globalPlayerDisplay) {
-                            globalPlayerDisplay->removePlayer(oldUsername);
-                            globalPlayerDisplay->addPlayer(newUsername);
-                        }
-                    }
-                }
-                else {
-                    broadcastMessage(username + ": " + message);
-                }
+                broadcastMessage(c->getUsername() + ": " + message);
                 return false;
             }
 
             if (c->closed()) {
                 broadcastMessage("[SERVER]: " + c->getUsername() + " has disconnected.");
-                if (globalPlayerDisplay) globalPlayerDisplay->removePlayer(c->getUsername());
                 return true;
             }
+
             return false;
         }), clients.end());
 }

@@ -1,5 +1,6 @@
 #include "ClientSocket.h"
 #include "ServerSocket.h"
+#include "PlayerDisplay.hpp"
 
 // Constructor for existing sockets
 ClientSocket::ClientSocket(SOCKET socket) : m_socket(socket), m_closed(false) {
@@ -7,6 +8,9 @@ ClientSocket::ClientSocket(SOCKET socket) : m_socket(socket), m_closed(false) {
         throw std::runtime_error("Invalid socket");
     }
 }
+
+PlayerDisplay* globalPlayerDisplay = nullptr;
+
 
 // Constructor for new client connections
 ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::string& username)
@@ -45,15 +49,26 @@ ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::st
 
     // Send username to the server upon connection
     send(m_username);
+
+    if (globalPlayerDisplay) {
+        globalPlayerDisplay->addPlayer(m_username);
+    }
 }
 
 ClientSocket::~ClientSocket() {
+    if (globalPlayerDisplay) {
+        globalPlayerDisplay->removePlayer(m_username);
+    }
     if (m_socket != INVALID_SOCKET) {
         closesocket(m_socket);
     }
 }
 
 void ClientSocket::setUsername(const std::string& username) {
+    if (globalPlayerDisplay) {
+        globalPlayerDisplay->removePlayer(m_username);
+        globalPlayerDisplay->addPlayer(username);
+    }
     m_username = username;
 }
 

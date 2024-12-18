@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     }
 
     // Create the main window
-    MainWindow* mainWindow = new MainWindow(1280, 720);
+    MainWindow* mainWindow = new MainWindow(800, 600);
 
     // Show the main window
     mainWindow->show(argc, argv);
