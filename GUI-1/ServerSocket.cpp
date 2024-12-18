@@ -2,6 +2,8 @@
 #include "PlayerDisplay.hpp"
 #include <algorithm>
 #include <cstdio>
+#include <FL/fl_ask.H>
+
 
 // Constructor: Initializes Winsock and sets up the server socket
 ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
@@ -88,8 +90,8 @@ void ServerSocket::closeAllClients()
 }
 
 // Handles all client connections
+// ServerSocket::handleClientConnections() - Add code to handle username change
 void ServerSocket::handleClientConnections() {
-    // Accept new client connections
     std::shared_ptr<ClientSocket> client = accept();
     if (client) {
         printf("Client Connected!\n");
@@ -99,7 +101,7 @@ void ServerSocket::handleClientConnections() {
         if (client->receive(username)) {
             client->setUsername(username);
             printf("Username received: %s\n", username.c_str());
-            playerDisplay->addPlayer(username); // Add the player to the display
+            playerDisplay->addPlayer(username);
 
             // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
@@ -109,25 +111,62 @@ void ServerSocket::handleClientConnections() {
         clients.push_back(client);
     }
 
-    // Process messages from connected clients and handle disconnections
+    // Process messages from connected clients
     clients.erase(std::remove_if(clients.begin(), clients.end(),
         [&](const std::shared_ptr<ClientSocket>& c) {
             std::string message;
 
             if (c->receive(message)) {
-                broadcastMessage(c->getUsername() + ": " + message);
-                return false;
+                // Handle username change command
+                if (message.rfind("/change_username ", 0) == 0) {
+                    std::string newUsername = message.substr(17); // Extract the new username
+                    bool usernameAvailable = true;
+
+                    // Check if the username is already taken
+                    for (const auto& existingClient : clients) {
+                        if (existingClient->getUsername() == newUsername) {
+                            usernameAvailable = false;
+                            break;
+                        }
+                    }
+
+                    // Respond to the client based on whether the username is available
+                    if (usernameAvailable) {
+                        // Remove the old username from player display
+                        playerDisplay->removePlayer(c->getUsername());
+
+                        // Update the client's username
+                        c->setUsername(newUsername);
+
+                        // Add the new username to the display
+                        playerDisplay->addPlayer(newUsername);
+
+                        // Broadcast the username change
+                        broadcastMessage("[SERVER]: " + newUsername + " has changed their username.");
+
+                    }
+                    else {
+                        // Show an FL_Alert to the user on failure
+                        fl_alert("The username '%s' is already taken. Please choose another one.", newUsername.c_str());
+                    }
+
+                    return false;  // Don't remove the client yet, continue processing messages
+                }
+                else {
+                    // Broadcast other messages
+                    broadcastMessage(c->getUsername() + ": " + message);
+                    return false;
+                }
             }
 
             if (c->closed()) {
-                // When the client disconnects, remove them from the display
-                playerDisplay->removePlayer(c->getUsername());
-
-                // Announce disconnection to all clients
                 broadcastMessage("[SERVER]: " + c->getUsername() + " has disconnected.");
+                // Remove the player from the list upon disconnect
+                playerDisplay->removePlayer(c->getUsername());
                 return true;
             }
 
             return false;
         }), clients.end());
 }
+

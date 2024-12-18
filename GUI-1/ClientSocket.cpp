@@ -1,6 +1,8 @@
 #include "ClientSocket.h"
 #include "ServerSocket.h"
 #include "PlayerDisplay.hpp"
+#include <FL\fl_ask.H>
+#include <FL/fl_draw.H>
 
 // Constructor for existing sockets
 ClientSocket::ClientSocket(SOCKET socket) : m_socket(socket), m_closed(false) {
@@ -106,9 +108,30 @@ bool ClientSocket::receive(std::string& message) {
 
 void ClientSocket::changeUsername(const std::string& newUsername) {
     std::string command = "/change_username " + newUsername;
-    send(command);  // Reuse the existing send function
-    m_username = newUsername;  // Update local username
+    send(command);  // Send the command to the server
+
+    // Update the local username immediately
+    setUsername(newUsername);
+
+    // Optionally, you can listen for a confirmation from the server to update the UI
+    std::string response;
+    if (receive(response)) {
+        if (response == "USERNAME_CHANGED") {
+            // If server confirms the change, update the display
+            if (globalPlayerDisplay) {
+                globalPlayerDisplay->removePlayer(m_username);  // Remove old username
+                globalPlayerDisplay->addPlayer(newUsername);    // Add new username
+            }
+            fl_alert("Your username has been successfully changed to '%s'.", newUsername.c_str());
+        }
+        else if (response == "USERNAME_TAKEN") {
+            // Handle failure case (username already taken, invalid, etc.)
+            fl_alert("Failed to change username. The username '%s' is already taken. Please try again.", newUsername.c_str());
+        }
+    }
 }
+
+
 
 
 bool ClientSocket::closed() {
