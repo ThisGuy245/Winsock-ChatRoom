@@ -4,7 +4,8 @@
 #include <cstdio>
 
 // Constructor: Initializes Winsock and sets up the server socket
-ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
+ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
+    : m_socket(INVALID_SOCKET), playerDisplay(_playerDisplay)
 {
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -45,6 +46,8 @@ ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
         throw std::runtime_error("Failed to set non-blocking mode");
     }
 }
+
+PlayerDisplay* playerDisplay;
 
 // Destructor: Cleans up the socket
 ServerSocket::~ServerSocket()
@@ -98,6 +101,7 @@ void ServerSocket::handleClientConnections() {
         if (client->receive(username)) {
             client->setUsername(username);
             printf("Username received: %s\n", username.c_str());
+            playerDisplay->addPlayer(username);
 
             // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");

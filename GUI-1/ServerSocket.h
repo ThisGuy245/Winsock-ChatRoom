@@ -8,11 +8,10 @@
 #include "ClientSocket.h"
 #include "PlayerDisplay.hpp"  // Include the header where PlayerDisplay is declared
 
-
 class ServerSocket
 {
 public:
-    ServerSocket(int _port);
+    ServerSocket(int _port, PlayerDisplay* _playerDisplay);
     ~ServerSocket();
 
     // Accepts a new client connection and returns a shared pointer to it
@@ -23,6 +22,8 @@ public:
 
     // Handles all client connections and incoming messages
     void handleClientConnections();
+
+    PlayerDisplay* playerDisplay;
 
 private:
     SOCKET m_socket;  // Main server socket

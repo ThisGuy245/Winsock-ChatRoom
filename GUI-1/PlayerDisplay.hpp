@@ -3,22 +3,23 @@
 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
-#include <vector>
+#include <FL/Fl_Text_Display.H>
+#include <FL/Fl_Text_Buffer.H>
 #include <string>
 
 class PlayerDisplay : public Fl_Group {
-private:
-    Fl_Box* sidePanel;   
-    std::vector<Fl_Box*> playerBoxes;
-
-    void updateLayout();
-
 public:
     PlayerDisplay(int X, int Y, int W, int H);
     ~PlayerDisplay();
 
     void addPlayer(const std::string& username);
     void removePlayer(const std::string& username);
+    void updateLayout();
+
+private:
+    Fl_Box* sidePanel;
+    Fl_Text_Display* disp;
+    Fl_Text_Buffer* tbuff;
 };
 
-#endif
+#endif // PLAYER_DISPLAY_HPP
