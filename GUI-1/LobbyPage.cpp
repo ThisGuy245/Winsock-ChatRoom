@@ -122,9 +122,10 @@ void LobbyPage::receiveMessages() {
 }
 
 void LobbyPage::changeUsername(const std::string& newUsername) {
-    if (!client) {
+    // Debugging output
+    if (client == nullptr) {
         if (chatBuffer) {
-            chatBuffer->append("[ERROR]: No active client to change username.\n");
+            chatBuffer->append("[ERROR]: client is unexpectedly nullptr before changeUsername.\n");
         }
         return;
     }
@@ -141,6 +142,7 @@ void LobbyPage::changeUsername(const std::string& newUsername) {
         }
     }
 }
+
 
 
 

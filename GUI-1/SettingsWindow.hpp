@@ -14,12 +14,14 @@
 
 class SettingsWindow : public Fl_Window {
 public:
+    // Constructor initializes the window with references to MainWindow and LobbyPage
     SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow, LobbyPage* lobbyPage);
     ~SettingsWindow();
 
+    // Apply changes based on user input
     void apply_resolution();
-    void apply_changes();
-    void apply_dark_mode(LobbyPage* lobbyPage);
+    void apply_changes();  // Removed argument here since lobbyPage is stored as a member
+    void apply_dark_mode();
 
 private:
     Fl_Input* username_input;       // Input box for username
@@ -28,10 +30,10 @@ private:
     Fl_Button* apply_button;        // Apply button
     Fl_Button* close_button;        // Close button
 
-    MainWindow* mainWindow;
-    LobbyPage* lobbyPage;
+    MainWindow* mainWindow;  // Reference to MainWindow
+    LobbyPage* lobbyPage;    // Reference to LobbyPage, will be used directly
 
-    void setup_ui();                // Internal function to set up UI
+    void setup_ui();         // Internal function to set up UI
 };
 
 #endif // SETTINGSWINDOW_HPP

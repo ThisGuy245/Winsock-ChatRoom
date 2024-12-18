@@ -40,15 +40,10 @@ public:
 
     PlayerDisplay* playerDisplay;
 
-private:
-    
-
-    // Network connections
     ClientSocket* client;
     ServerSocket* server;
 
-    
-
+private:
     std::string username;
 
     // Callback for menu items
