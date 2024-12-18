@@ -44,13 +44,19 @@ void PlayerDisplay::removePlayer(const std::string& username) {
     const char* text = tbuff->text();
     std::string bufferText(text);
     size_t pos = bufferText.find(username);
+
+    // Ensure that we only remove the player along with the newline character
     if (pos != std::string::npos) {
-        bufferText.erase(pos, username.length() + 1); // +1 to remove the newline character
-        tbuff->text(bufferText.c_str());
+        size_t endPos = bufferText.find("\n", pos); // Find the end of the username line
+        if (endPos != std::string::npos) {
+            bufferText.erase(pos, endPos - pos + 1); // Remove the username and the newline character
+            tbuff->text(bufferText.c_str());
+        }
     }
 
     redraw();
 }
+
 
 // Updates the layout of player boxes
 void PlayerDisplay::updateLayout() {

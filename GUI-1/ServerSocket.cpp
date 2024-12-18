@@ -99,7 +99,7 @@ void ServerSocket::handleClientConnections() {
         if (client->receive(username)) {
             client->setUsername(username);
             printf("Username received: %s\n", username.c_str());
-            playerDisplay->addPlayer(username);
+            playerDisplay->addPlayer(username); // Add the player to the display
 
             // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
@@ -109,7 +109,7 @@ void ServerSocket::handleClientConnections() {
         clients.push_back(client);
     }
 
-    // Process messages from connected clients
+    // Process messages from connected clients and handle disconnections
     clients.erase(std::remove_if(clients.begin(), clients.end(),
         [&](const std::shared_ptr<ClientSocket>& c) {
             std::string message;
@@ -120,6 +120,10 @@ void ServerSocket::handleClientConnections() {
             }
 
             if (c->closed()) {
+                // When the client disconnects, remove them from the display
+                playerDisplay->removePlayer(c->getUsername());
+
+                // Announce disconnection to all clients
                 broadcastMessage("[SERVER]: " + c->getUsername() + " has disconnected.");
                 return true;
             }
