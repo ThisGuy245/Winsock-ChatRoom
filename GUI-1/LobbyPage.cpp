@@ -122,19 +122,8 @@ void LobbyPage::receiveMessages() {
 }
 
 void LobbyPage::changeUsername(const std::string& newUsername) {
-    // Debugging output
-    if (client == nullptr) {
-        if (chatBuffer) {
-            chatBuffer->append("[ERROR]: client is unexpectedly nullptr before changeUsername.\n");
-        }
-        return;
-    }
-
     try {
         client->changeUsername(newUsername);  // Call ClientSocket's method
-        if (chatBuffer) {
-            chatBuffer->append(("You changed your username to: " + newUsername + "\n").c_str());
-        }
     }
     catch (const std::exception& e) {
         if (chatBuffer) {
