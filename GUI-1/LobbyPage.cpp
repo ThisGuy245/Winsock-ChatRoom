@@ -97,18 +97,18 @@ void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     client = new ClientSocket(ip, 12345, username);  // Client joins the server
     chatBuffer->append("This is a buffer line\n");
     // Announce the client joining
-    chatBuffer->append((username + " has joined the server\n").c_str());
+    chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
 }
 
 void LobbyPage::clientLeft(const std::string& username) {
-    chatBuffer->append((username + " has left the server\n").c_str());
+    chatBuffer->append(("[SERVER]: " + username + " has left the server\n").c_str());
 }
 
 
 void LobbyPage::sendMessage(const std::string& message) {
     if (client) {
         client->send(message);  // Send the message, not the username
-        chatBuffer->append((username + ": " + message + "\n").c_str());  // Send the username as part of the message
+        //chatBuffer->append((username + ": " + message + "\n").c_str());  // Send the username as part of the message
     }
 }
 
