@@ -31,7 +31,6 @@ void PlayerDisplay::addPlayer(const std::string& username) {
 
     // Append the username to the text buffer
     tbuff->append((username + "\n").c_str());
-
     redraw();
 }
 
@@ -61,6 +60,5 @@ void PlayerDisplay::removePlayer(const std::string& username) {
 // Updates the layout of player boxes
 void PlayerDisplay::updateLayout() {
     int yOffset = 10;
-
     redraw();
 }
