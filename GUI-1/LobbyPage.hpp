@@ -29,7 +29,7 @@ public:
     void applyStyles();
     void resizeWidgets(int X, int Y, int W, int H); // Resize widgets
     void changeUsername(const std::string& newUsername);
-private:
+
     // Widgets
     Fl_Menu_Bar* menuBar;
     Fl_Scroll* scrollArea;
@@ -38,11 +38,16 @@ private:
     Fl_Input* messageInput;
     Fl_Button* sendButton;
 
+    PlayerDisplay* playerDisplay;
+
+private:
+    
+
     // Network connections
     ClientSocket* client;
     ServerSocket* server;
 
-    PlayerDisplay* playerDisplay;
+    
 
     std::string username;
 

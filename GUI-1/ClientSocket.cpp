@@ -89,6 +89,12 @@ bool ClientSocket::receive(std::string& message) {
     return true;
 }
 
+void ClientSocket::changeUsername(const std::string& newUsername) {
+    std::string command = "/change_username " + newUsername;
+    send(command);  // Reuse the existing send function
+    m_username = newUsername;  // Update local username
+}
+
 
 bool ClientSocket::closed() {
     return m_closed;

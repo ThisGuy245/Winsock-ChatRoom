@@ -18,7 +18,8 @@ public:
     ~SettingsWindow();
 
     void apply_resolution();
-    void apply_changes(); // New function to apply all settings, including username change
+    void apply_changes();
+    void apply_dark_mode(LobbyPage* lobbyPage);
 
 private:
     Fl_Input* username_input;       // Input box for username

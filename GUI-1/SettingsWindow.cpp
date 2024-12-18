@@ -1,8 +1,12 @@
 #include "SettingsWindow.hpp"
 #include "MainWindow.h"
+#include "LobbyPage.hpp"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Scroll.H>
+#include <FL/Fl_Text_Display.H>
+#include <FL/Fl_Input.H>
 #include <FL/fl_draw.H>
 
 SettingsWindow::SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow, LobbyPage* lobbyPage)
@@ -51,43 +55,63 @@ void SettingsWindow::setup_ui() {
 }
 
 void SettingsWindow::apply_changes() {
-    // Apply resolution changes
     apply_resolution();
-
-    // Handle username change
-    if (!mainWindow) return;
+    apply_dark_mode(lobbyPage);
 
     const char* newUsername = username_input->value();
-    if (newUsername && *newUsername) { // Check if input is not empty
-        lobbyPage->changeUsername(newUsername); // Call lobbyPage method to handle username change
+    if (newUsername && *newUsername && lobbyPage) {
+        lobbyPage->changeUsername(newUsername);
     }
 }
 
 void SettingsWindow::apply_resolution() {
-    if (!mainWindow) return;
-
-    // Get selected resolution
     int selected = resolution_choice->value();
-    int width = 1280, height = 720; // Default resolution
+    int width = 1280, height = 720;
 
     switch (selected) {
     case 0: width = 800; height = 600; break;
     case 1: width = 1024; height = 768; break;
-    case 2: width = 1280; height = 720; break;
     case 3: width = 1920; height = 1080; break;
-    case 4: // Custom - Retain current resolution
-        width = mainWindow->w();
-        height = mainWindow->h();
-        break;
+    case 4: width = mainWindow->w(); height = mainWindow->h(); break;
     }
 
     mainWindow->setResolution(width, height);
+}
 
-    // Set dropdown to "Custom" if resolution doesn't match predefined ones
-    if (!((width == 800 && height == 600) ||
-        (width == 1024 && height == 768) ||
-        (width == 1280 && height == 720) ||
-        (width == 1920 && height == 1080))) {
-        resolution_choice->value(4);
+void SettingsWindow::apply_dark_mode(LobbyPage* lobbyPage) {
+    bool isDarkMode = theme_toggle->value();
+
+    // Set global background and foreground colors
+    Fl::background(isDarkMode ? 45 : 240, isDarkMode ? 45 : 240, isDarkMode ? 45 : 240);
+    Fl::foreground(isDarkMode ? 255 : 0, isDarkMode ? 255 : 0, isDarkMode ? 255 : 0);
+
+    mainWindow->redraw();
+
+    if (!lobbyPage) return;
+
+    // Apply grey background for scroll area
+    if (lobbyPage->scrollArea) {
+        lobbyPage->scrollArea->color(fl_rgb_color(60, 60, 60)); // Dark grey
+        lobbyPage->scrollArea->redraw();
+    }
+
+    // Apply grey background and white text for chat display
+    if (lobbyPage->chatDisplay) {
+        lobbyPage->chatDisplay->color(fl_rgb_color(50, 50, 50));  // Dark grey
+        lobbyPage->chatDisplay->textcolor(FL_WHITE);              // White text
+        lobbyPage->chatDisplay->redraw();
+    }
+
+    // Apply grey background and white text for message input
+    if (lobbyPage->messageInput) {
+        lobbyPage->messageInput->color(fl_rgb_color(45, 45, 45)); // Slightly darker grey
+        lobbyPage->messageInput->textcolor(FL_WHITE);            // White text
+        lobbyPage->messageInput->redraw();
+    }
+
+    // Apply grey background to player display if applicable
+    if (lobbyPage->playerDisplay) {
+        lobbyPage->playerDisplay->color(fl_rgb_color(60, 60, 60));
+        lobbyPage->playerDisplay->redraw();
     }
 }

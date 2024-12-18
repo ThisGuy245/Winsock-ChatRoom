@@ -11,7 +11,7 @@
 // Declaration of globalPlayerDisplay to be used across multiple files
 extern PlayerDisplay* globalPlayerDisplay;
 
-class ServerSocket
+struct ServerSocket
 {
 public:
     ServerSocket(int _port);
@@ -19,6 +19,9 @@ public:
 
     // Accepts a new client connection and returns a shared pointer to it
     std::shared_ptr<ClientSocket> accept();
+
+    void closeAllClients();
+    void broadcastMessage(const std::string& message);
 
     // Handles all client connections and incoming messages
     void handleClientConnections();

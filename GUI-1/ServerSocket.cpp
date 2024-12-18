@@ -1,9 +1,7 @@
-#include <WS2tcpip.h>
-#include <stdexcept>
-#include <string>
 #include "ServerSocket.h"
-#include "ClientSocket.h"
 #include "PlayerDisplay.hpp"
+#include <algorithm>
+#include <cstdio>
 
 // Global player display for managing connected players
 PlayerDisplay* globalPlayerDisplay = nullptr;
@@ -24,7 +22,6 @@ ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
 
     addrinfo* result = NULL;
 
-    // Resolve server address and port
     if (getaddrinfo(NULL, std::to_string(_port).c_str(), &hints, &result) != 0) {
         throw std::runtime_error("Failed to resolve server address or port");
     }
@@ -46,8 +43,7 @@ ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
         throw std::runtime_error("Failed to listen on socket");
     }
 
-    // Set the socket to non-blocking mode
-    u_long mode = 1;
+    u_long mode = 1; // Set non-blocking mode
     if (ioctlsocket(m_socket, FIONBIO, &mode) == SOCKET_ERROR) {
         throw std::runtime_error("Failed to set non-blocking mode");
     }
@@ -56,6 +52,7 @@ ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET)
 // Destructor: Cleans up the socket
 ServerSocket::~ServerSocket()
 {
+    closeAllClients();
     closesocket(m_socket);
     WSACleanup();
 }
@@ -66,16 +63,33 @@ std::shared_ptr<ClientSocket> ServerSocket::accept()
     SOCKET socket = ::accept(m_socket, NULL, NULL);
     if (socket == INVALID_SOCKET) {
         if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            throw std::runtime_error("Failed to accept socket");
+            printf("Failed to accept connection: %d\n", WSAGetLastError());
         }
         return nullptr;
     }
 
-    std::shared_ptr<ClientSocket> client = std::make_shared<ClientSocket>(socket);
-    return client;
+    return std::make_shared<ClientSocket>(socket);
 }
 
-// Handles all client connections: new connections, incoming messages, and disconnections
+// Broadcast a message to all clients
+void ServerSocket::broadcastMessage(const std::string& message)
+{
+    for (const auto& client : clients) {
+        client->send(message);
+    }
+}
+
+// Gracefully close all clients
+void ServerSocket::closeAllClients()
+{
+    for (auto& client : clients) {
+        client->send("[SERVER]: Server is shutting down.");
+        client->closed();
+    }
+    clients.clear();
+}
+
+// Handles all client connections
 void ServerSocket::handleClientConnections()
 {
     // Accept new client connections
@@ -83,7 +97,6 @@ void ServerSocket::handleClientConnections()
     if (client) {
         printf("Client Connected!\n");
 
-        // Request and set username
         std::string username;
         if (client->receive(username)) {
             client->setUsername(username);
@@ -93,75 +106,44 @@ void ServerSocket::handleClientConnections()
                 globalPlayerDisplay->addPlayer(username);
             }
 
-            // Broadcast join message
-            std::string joinMessage = "[SERVER]: " + username + " has joined the server";
-            for (const auto& c : clients) {
-                c->send(joinMessage);
-            }
-        }
-        else {
-            printf("Failed to receive username from client.\n");
+            broadcastMessage("[SERVER]: " + username + " has joined the server.");
         }
 
         clients.push_back(client);
     }
 
     // Process messages from connected clients
-    for (size_t i = 0; i < clients.size(); ++i) {
-        std::string message;
+    clients.erase(std::remove_if(clients.begin(), clients.end(),
+        [&](const std::shared_ptr<ClientSocket>& c) {
+            std::string message;
 
-        if (clients[i]->receive(message)) {
-            const std::string& username = clients[i]->getUsername();
+            if (c->receive(message)) {
+                const std::string& username = c->getUsername();
 
-            // Check for a username change command
-            if (message.rfind("/change_username", 0) == 0) {
-                std::string newUsername = message.substr(17);
-                if (!newUsername.empty()) {
-                    std::string oldUsername = username;
-                    clients[i]->setUsername(newUsername);
+                if (message.rfind("/change_username", 0) == 0) {
+                    std::string newUsername = message.substr(17);
+                    if (!newUsername.empty()) {
+                        std::string oldUsername = username;
+                        c->setUsername(newUsername);
+                        broadcastMessage("[SERVER]: " + oldUsername + " is now known as " + newUsername);
 
-                    // Notify all clients about the change
-                    std::string notification = "[SERVER]: " + oldUsername + " is now known as " + newUsername;
-                    printf("%s\n", notification.c_str());
-                    for (const auto& c : clients) {
-                        c->send(notification);
-                    }
-
-                    if (globalPlayerDisplay) {
-                        globalPlayerDisplay->removePlayer(oldUsername);
-                        globalPlayerDisplay->addPlayer(newUsername);
+                        if (globalPlayerDisplay) {
+                            globalPlayerDisplay->removePlayer(oldUsername);
+                            globalPlayerDisplay->addPlayer(newUsername);
+                        }
                     }
                 }
-            }
-            else {
-                // Broadcast regular messages
-                printf("Message received from %s: %s\n", username.c_str(), message.c_str());
-                std::string broadcastMessage = username + ": " + message;
-                for (size_t j = 0; j < clients.size(); ++j) {
-                    if (i != j) {
-                        clients[j]->send(broadcastMessage);
-                    }
+                else {
+                    broadcastMessage(username + ": " + message);
                 }
-            }
-        }
-        else if (clients[i]->closed()) {
-            // Handle client disconnection
-            const std::string& username = clients[i]->getUsername();
-            printf("%s has disconnected\n", username.c_str());
-            std::string disconnectMessage = "[SERVER]: " + username + " has disconnected";
-
-            if (globalPlayerDisplay) {
-                globalPlayerDisplay->removePlayer(username);
+                return false;
             }
 
-            for (size_t j = 0; j < clients.size(); ++j) {
-                if (i != j) {
-                    clients[j]->send(disconnectMessage);
-                }
+            if (c->closed()) {
+                broadcastMessage("[SERVER]: " + c->getUsername() + " has disconnected.");
+                if (globalPlayerDisplay) globalPlayerDisplay->removePlayer(c->getUsername());
+                return true;
             }
-
-            clients.erase(clients.begin() + i);
-            i--;
-        }
-    }
+            return false;
+        }), clients.end());
 }

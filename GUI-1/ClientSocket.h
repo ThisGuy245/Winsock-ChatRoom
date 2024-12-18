@@ -15,6 +15,8 @@ struct ClientSocket {
     void setUsername(const std::string& username);
     const std::string& getUsername() const;
 
+    void changeUsername(const std::string& newUsername);
+
     void send(const std::string& message);
     bool receive(std::string& message);
 

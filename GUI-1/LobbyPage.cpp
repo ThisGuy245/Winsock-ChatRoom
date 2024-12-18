@@ -182,16 +182,28 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
 }
 
 void LobbyPage::changeUsername(const std::string& newUsername) {
-    if (client) {
-        // Send the new username to the server with a special prefix
-        std::string message = "/change_username " + newUsername;
-        client->send(message);
-        chatBuffer->append(("You changed your username to: " + newUsername + "\n").c_str());
+    if (!client) {
+        if (chatBuffer) {
+            chatBuffer->append("[ERROR]: Cannot change username. Client is not connected.\n");
+        }
+        return;
+    }
 
-        // Update the local username
-        this->username = newUsername;
+    try {
+        client->changeUsername(newUsername);  // Call ClientSocket's method
+        if (chatBuffer) {
+            chatBuffer->append(("You changed your username to: " + newUsername + "\n").c_str());
+        }
+    }
+    catch (const std::exception& e) {
+        if (chatBuffer) {
+            chatBuffer->append(("[ERROR]: Failed to change username: " + std::string(e.what()) + "\n").c_str());
+        }
     }
 }
+
+
+
 
 
 void LobbyPage::applyStyles() {
