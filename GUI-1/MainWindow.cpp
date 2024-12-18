@@ -4,10 +4,15 @@
 #include <FL/fl_ask.H> // For debugging alerts
 #include <memory>
 
+/**
+ * @class MainWindow
+ * @brief The main application window managing different pages (HomePage and LobbyPage) and timer functionality.
+ */
+
 MainWindow::MainWindow(int width, int height)
     : Fl_Window(width, height), homePage(nullptr), lobbyPage(nullptr), timer(0.1) {
 
-    // Initialize homePage
+    // Initialize HomePage
     homePage = new HomePage(0, 0, width, height, this);
     if (!homePage) {
         fl_alert("Failed to create HomePage!");
@@ -16,8 +21,8 @@ MainWindow::MainWindow(int width, int height)
     add(homePage);
     homePage->show();
 
-    // Initialize lobbyPage
-    this->lobbyPage = new LobbyPage(0, 0, width, height);
+    // Initialize LobbyPage
+    lobbyPage = new LobbyPage(0, 0, width, height);
     if (!lobbyPage) {
         fl_alert("Failed to create LobbyPage!");
         return;
@@ -25,6 +30,7 @@ MainWindow::MainWindow(int width, int height)
     add(lobbyPage);
     lobbyPage->hide();
 
+    // Configure timer
     timer.setCallback([](void* userdata) {
         auto* window = static_cast<MainWindow*>(userdata);
         if (window) {
@@ -36,15 +42,19 @@ MainWindow::MainWindow(int width, int height)
     timer.start();
 }
 
-// Destructor: Cleans up dynamically allocated pages
+/**
+ * @brief Destructor cleans up dynamically allocated pages.
+ */
 MainWindow::~MainWindow() {
-    // Ensure all allocated pages are deleted
     delete homePage;
     delete lobbyPage;
     close();
 }
 
-// Timer tick callback to update the LobbyPage
+/**
+ * @brief Timer tick callback to update the LobbyPage.
+ * @param userdata Pointer to MainWindow instance.
+ */
 void MainWindow::onTick(void* userdata) {
     if (lobbyPage && lobbyPage->visible()) {
         lobbyPage->Update();
@@ -58,12 +68,19 @@ void MainWindow::onTick(void* userdata) {
         }, userdata);
 }
 
-// Getter: Returns the LobbyPage instance
+/**
+ * @brief Getter for the LobbyPage instance.
+ * @return Pointer to LobbyPage.
+ */
 LobbyPage* MainWindow::getLobbyPage() const {
     return lobbyPage;
 }
 
-// Static method: Switch to the Home Page
+/**
+ * @brief Static method to switch to the Home Page.
+ * @param widget FLTK widget pointer (unused).
+ * @param userdata Pointer to MainWindow instance.
+ */
 void MainWindow::switch_to_home(Fl_Widget* widget, void* userdata) {
     auto* window = static_cast<MainWindow*>(userdata);
     if (!window) {
@@ -80,7 +97,11 @@ void MainWindow::switch_to_home(Fl_Widget* widget, void* userdata) {
     window->redraw(); // Ensure the UI updates
 }
 
-// Static method: Switch to the Lobby Page
+/**
+ * @brief Static method to switch to the Lobby Page.
+ * @param widget FLTK widget pointer (unused).
+ * @param userdata Pointer to MainWindow instance.
+ */
 void MainWindow::switch_to_lobby(Fl_Widget* widget, void* userdata) {
     auto* window = static_cast<MainWindow*>(userdata);
     if (!window) {
@@ -93,20 +114,24 @@ void MainWindow::switch_to_lobby(Fl_Widget* widget, void* userdata) {
     }
     if (window->lobbyPage) {
         window->lobbyPage->show();
-        // Make sure client socket is set when switching to the lobby
     }
     else {
-        fl_alert("lobbyPage is not initialized!");
+        fl_alert("LobbyPage is not initialized!");
     }
     window->redraw(); // Ensure the UI updates
 }
 
-// Adds a cleanup callback to be executed when the window closes
+/**
+ * @brief Adds a cleanup callback to be executed when the window closes.
+ * @param callback Function to be called on close.
+ */
 void MainWindow::on_close(const std::function<void()>& callback) {
     close_callbacks.push_back(callback);
 }
 
-// Closes the application and executes registered callbacks
+/**
+ * @brief Closes the application and executes registered cleanup callbacks.
+ */
 void MainWindow::close() {
     for (const auto& callback : close_callbacks) {
         callback();

@@ -4,6 +4,10 @@
 #include <iostream>
 #include "ServerSocket.h"
 
+/**
+ * @brief Constructs the ServerSocket, initializes Winsock, and sets up the server socket.
+ * @param _port The port number to bind the server to.
+ */
 ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET) {
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -50,11 +54,18 @@ ServerSocket::ServerSocket(int _port) : m_socket(INVALID_SOCKET) {
     }
 }
 
+/**
+ * @brief Destructor for ServerSocket. Closes the socket and cleans up Winsock.
+ */
 ServerSocket::~ServerSocket() {
     closesocket(m_socket);
     WSACleanup();
 }
 
+/**
+ * @brief Accepts a new client connection.
+ * @return A shared pointer to a ClientSocket instance, or nullptr if no connection is pending.
+ */
 std::shared_ptr<ClientSocket> ServerSocket::accept() {
     SOCKET clientSocket = ::accept(m_socket, NULL, NULL);
     if (clientSocket == INVALID_SOCKET) {
@@ -68,6 +79,9 @@ std::shared_ptr<ClientSocket> ServerSocket::accept() {
     return std::make_shared<ClientSocket>(clientSocket);
 }
 
+/**
+ * @brief Handles new client connections and processes messages from existing clients.
+ */
 void ServerSocket::handleClientConnections() {
     // Accept new client connections
     std::shared_ptr<ClientSocket> client = accept();
@@ -85,7 +99,7 @@ void ServerSocket::handleClientConnections() {
     }
 
     // Handle messages from connected clients
-    for (int i = 0; i < clients.size(); ++i) {
+    for (size_t i = 0; i < clients.size(); ++i) {
         std::string sender, message;
         bool receivedMessage = clients[i]->receive(sender, message);
 
@@ -109,6 +123,11 @@ void ServerSocket::handleClientConnections() {
     }
 }
 
+/**
+ * @brief Broadcasts a message to all connected clients, optionally excluding one client.
+ * @param message The message to broadcast.
+ * @param excludeClient A shared pointer to the client to exclude from the broadcast (default is nullptr).
+ */
 void ServerSocket::broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> excludeClient) {
     for (auto& client : clients) {
         if (client != excludeClient) {
