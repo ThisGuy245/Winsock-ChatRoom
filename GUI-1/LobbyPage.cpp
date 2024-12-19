@@ -106,17 +106,18 @@ void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
  */
 void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     this->username = username;
-    server = new ServerSocket(12345, playerDisplay);
+    server = new ServerSocket(12345, playerDisplay, "config.xml");
     chatBuffer->append("Server has been created\n");
 
     try {
-        client = new ClientSocket(ip, 12345, username, playerDisplay);
+        client = new ClientSocket(ip, 12345, username, playerDisplay, "config.xml");
         chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
     }
     catch (const std::exception& e) {
         chatBuffer->append(("[ERROR]: Failed to initialize client: " + std::string(e.what()) + "\n").c_str());
     }
 }
+
 
 /**
  * @brief Joins an existing server as a client.
@@ -125,7 +126,7 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
  */
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     this->username = username;  // Set the username for this session
-    client = new ClientSocket(ip, 12345, username, playerDisplay);  // Client joins the server
+    client = new ClientSocket(ip, 12345, username, playerDisplay, "config.xml");  // Client joins the server
     chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
 }
 
@@ -194,9 +195,7 @@ void LobbyPage::Update() {
 void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     LobbyPage* page = static_cast<LobbyPage*>(userdata);
     Fl_Menu_Bar* menu = static_cast<Fl_Menu_Bar*>(widget);
-
     MainWindow* mainWindow = dynamic_cast<MainWindow*>(page->parent());
-
     int menu_index = menu->value();  // Get the index of the selected menu item
 
     switch (menu_index) {

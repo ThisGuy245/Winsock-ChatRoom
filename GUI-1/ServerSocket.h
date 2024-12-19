@@ -7,16 +7,19 @@
 #include <string>
 #include "ClientSocket.h"
 #include "PlayerDisplay.hpp"  // Include the header where PlayerDisplay is declared
+#include "Settings.h"
 
-class ServerSocket
+struct ServerSocket
 {
 public:
+
+    std::vector<std::shared_ptr<ClientSocket>> clients; ///< Stores connected clients
     /**
      * @brief Constructor that initializes the server socket.
      * @param _port The port number on which the server will listen.
      * @param _playerDisplay A pointer to the PlayerDisplay instance.
      */
-    ServerSocket(int _port, PlayerDisplay* playerDisplay);
+    ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::string& settingsPath);
 
     /** Destructor that cleans up server resources. */
     ~ServerSocket();
@@ -35,19 +38,27 @@ public:
      * @param message The message to be broadcast.
      */
     void broadcastMessage(const std::string& message);
+    void broadcastCommand(const std::string& command, const std::string& message);
+
+    void notifyPlayerAdded(const std::string& username);
+    void notifyPlayerRemoved(const std::string& username);
+
+    bool isUsernameTaken(const std::string& username);
+    bool handleUsernameChange(std::shared_ptr<ClientSocket> client, const std::string& newUsername);
+
 
     /** Handles all client connections and incoming messages. */
     void handleClientConnections();
 
     PlayerDisplay* playerDisplay; ///< Pointer to the PlayerDisplay instance
+    Settings m_settings; ///< Manage client settings via XML
 
 private:
     SOCKET m_socket;  ///< Main server socket
-    std::vector<std::shared_ptr<ClientSocket>> clients; ///< Stores connected clients
-
+    
     // Disable copying and assignment
     ServerSocket(const ServerSocket& _copy) = delete;
-    ServerSocket& operator=(const ServerSocket& _assign) = delete;
+    ServerSocket& operator=(const ServerSocket& _assign) = delete; 
 
 };
 

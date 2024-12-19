@@ -129,7 +129,7 @@
     <Xml Include="chat_history.xml">
       <Filter>Resource Files</Filter>
     </Xml>
-    <Xml Include="settings.xml">
+    <Xml Include="config.xml">
       <Filter>Resource Files</Filter>
     </Xml>
   </ItemGroup>

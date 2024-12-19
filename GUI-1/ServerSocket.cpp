@@ -4,13 +4,17 @@
 #include <cstdio>
 #include <FL/fl_ask.H>
 
+// Work with XML
+#include "pugiconfig.hpp"
+#include "pugixml.hpp"
+
 /**
  * @brief Constructor for ServerSocket class, initializes Winsock and sets up the server socket.
  * @param _port The port number to bind the server socket.
  * @param _playerDisplay Pointer to the PlayerDisplay object for updating player list.
  */
-ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay)
-    : m_socket(INVALID_SOCKET), playerDisplay(playerDisplay)
+ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::string& settingsPath)
+    : m_socket(INVALID_SOCKET), playerDisplay(playerDisplay), m_settings(settingsPath)
 {
     // Initialize Winsock
     WSADATA wsaData;
@@ -80,7 +84,7 @@ std::shared_ptr<ClientSocket> ServerSocket::accept()
         return nullptr;
     }
 
-    return std::make_shared<ClientSocket>(socket, playerDisplay);
+    return std::make_shared<ClientSocket>(socket, playerDisplay, "config.xml");
 }
 
 /**
@@ -93,6 +97,28 @@ void ServerSocket::broadcastMessage(const std::string& message)
         client->send(message);
     }
 }
+
+/**
+ * @brief Broadcasts a message with a specific command to all connected clients.
+ * @param command The command type (e.g., ADD_PLAYER, REMOVE_PLAYER).
+ * @param message The message content.
+ */
+void ServerSocket::broadcastCommand(const std::string& command, const std::string& message) {
+    std::string fullMessage = command + ":" + message;
+    for (const auto& client : clients) {
+        client->send(fullMessage);
+    }
+}
+
+// Example Usage
+void ServerSocket::notifyPlayerAdded(const std::string& username) {
+    broadcastCommand("ADD_PLAYER", username);
+}
+
+void ServerSocket::notifyPlayerRemoved(const std::string& username) {
+    broadcastCommand("REMOVE_PLAYER", username);
+}
+
 
 /**
  * @brief Closes all connected clients and removes them from the list.
@@ -111,20 +137,25 @@ void ServerSocket::closeAllClients()
  */
 void ServerSocket::handleClientConnections() {
     std::shared_ptr<ClientSocket> client = accept();
-    if (client) {
-        printf("Client Connected!\n");
 
+    if (client) {
         // Receive username upon connection
         std::string username;
         if (client->receive(username)) {
             client->setUsername(username);
             printf("Username received: %s\n", username.c_str());
-            client->addingPlayer(username);
+
+            // Check that the username is not already in use
+            if (isUsernameTaken(username)) {
+                fl_alert("This Username is already in use!");
+                return;
+            }
 
             // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
         }
 
+        printf("Client Connected!\n");
         // Add the new client to the list
         clients.push_back(client);
     }
@@ -133,63 +164,83 @@ void ServerSocket::handleClientConnections() {
     std::vector<std::string> disconnectedUsernames;
 
     // Process messages from connected clients
-    clients.erase(std::remove_if(clients.begin(), clients.end(),
-        [&](const std::shared_ptr<ClientSocket>& c) {
-            std::string message;
-            std::string username = c->getUsername();
-            if (c->receive(message)) {
-                // Handle username change command
-                if (message.rfind("/change_username ", 0) == 0) {
-                    std::string newUsername = message.substr(17); // Extract the new username
-                    bool usernameAvailable = true;
-                    // Check if the username is already taken
-                    for (const auto& existingClient : clients) {
-                        if (existingClient->getUsername() == newUsername) {
-                            usernameAvailable = false;
-                            break;
-                        }
-                    }
-                    // Respond to the client based on whether the username is available
-                    if (usernameAvailable) {
-                        // Update the player's display via the `ClientSocket` methods
-                        c->removingPlayer(c->getUsername());
-                        c->setUsername(newUsername);
-                        c->addingPlayer(newUsername);
+    for (auto it = clients.begin(); it != clients.end(); /* no increment here */) {
+        std::shared_ptr<ClientSocket>& c = *it;
+        std::string message;
+        std::string username = c->getUsername();
 
-                        // Broadcast the username change
-                        broadcastMessage("[SERVER]: " + newUsername + " has changed their username.");
-                    }
-                    else {
-                        // Notify the client of the failure (no alert as per instructions)
-                        c->send("[SERVER]: The username '" + newUsername + "' is already taken. Please choose another one.");
-                    }
+        // If the client has sent a message, handle it
+        if (c->receive(message)) {
+            // Handle username change command
+            if (message.rfind("/change_username ", 0) == 0) {
+                std::string newUsername = message.substr(17); // Extract the new username
 
-                    return false;  // Don't remove the client yet, continue processing messages
+                if (handleUsernameChange(c, newUsername)) {
+                    // Broadcast the username change
+                    broadcastMessage("[SERVER]: " + newUsername + " has changed their username.");
                 }
                 else {
-                    // Broadcast other messages
-                    broadcastMessage(c->getUsername() + ": " + message);
-                    return false;
+                    // Notify the client that the username is already taken
+                    c->send("[SERVER]: The username '" + newUsername + "' is already taken. Please choose another one.");
                 }
+
+                // Continue processing the same client
+                ++it;
             }
-
-            // Check if the client has closed (disconnected)
-            if (c->closed()) {
-                // Add the username to the list of disconnected users
-                disconnectedUsernames.push_back(username);
-
-                // Update the player's display via the `ClientSocket` method
-                c->removingPlayer(username);
-
-                // Return true to remove the client from the list
-                return true;
+            else {
+                // Broadcast other messages
+                broadcastMessage(c->getUsername() + ": " + message);
+                ++it;
             }
+        }
+        else if (c->closed()) {
+            // If the client has disconnected, process their disconnection
+            disconnectedUsernames.push_back(username);
+            c->removingPlayer(username);
 
-            return false;
-        }), clients.end());
+            // Remove the client from the list
+            it = clients.erase(it);
+        }
+        else {
+            // No message received, continue to the next client
+            ++it;
+        }
+    }
 
     // Now broadcast all disconnection messages
     for (const auto& username : disconnectedUsernames) {
         broadcastMessage("[SERVER]: " + username + " has disconnected.");
     }
 }
+
+/**
+ * @brief Checks if the given username is already taken.
+ * @param username The username to check.
+ * @return true if the username is already in use, false otherwise.
+ */
+bool ServerSocket::isUsernameTaken(const std::string& username) {
+    return std::any_of(clients.begin(), clients.end(),
+        [&](const std::shared_ptr<ClientSocket>& client) {
+            return client->getUsername() == username;
+        });
+}
+
+/**
+ * @brief Handles username change for a client.
+ * @param client The client requesting the change.
+ * @param newUsername The new username.
+ * @return true if the username change was successful, false if the new username is already taken.
+ */
+bool ServerSocket::handleUsernameChange(std::shared_ptr<ClientSocket> client, const std::string& newUsername) {
+    // Check if the new username is already taken
+    if (isUsernameTaken(newUsername)) {
+        return false;
+    }
+
+    // Proceed with the username change
+    client->removingPlayer(client->getUsername());
+    client->setUsername(newUsername);
+    client->addingPlayer(newUsername);
+    return true;
+}
+

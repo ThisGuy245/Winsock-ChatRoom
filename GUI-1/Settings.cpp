@@ -1,5 +1,7 @@
 #include "Settings.h"
 #include <iostream>
+#include <tuple>
+#include <FL/fl_ask.H>
 
 // Constructor: Load the XML file
 Settings::Settings(const std::string& path) : m_path(path)
@@ -8,58 +10,79 @@ Settings::Settings(const std::string& path) : m_path(path)
     if (!result)
     {
         std::cerr << "Failed to load XML file: " << result.description() << std::endl;
-
-        // Create a default XML structure if the file doesn't exist
-        pugi::xml_node root = m_doc.append_child("settings");
-        pugi::xml_node display = root.append_child("display");
-        display.append_child("mode").text() = "light"; // Default to light mode
-        pugi::xml_node resolution = display.append_child("resolution");
-        resolution.append_child("width").text() = 1920; // Default width
-        resolution.append_child("height").text() = 1080; // Default height
-        m_doc.save_file(m_path.c_str());
+        m_doc.append_child("Clients");
+        save(); // Save initial structure
     }
 }
 
-// Destructor: Automatically save changes to the XML file
+// Destructor: Save XML on destruction
 Settings::~Settings()
 {
     save();
 }
 
-// Get mode (dark/light)
-std::string Settings::getMode()
+// Find or create a client node by username
+pugi::xml_node Settings::findOrCreateClient(const std::string& username)
 {
-    return m_doc.child("settings").child("display").child("mode").text().as_string();
+    pugi::xml_node clientsNode = m_doc.child("Clients");
+    for (pugi::xml_node client : clientsNode.children("Client"))
+    {
+        std::string test = std::string(client.child("Username").text().as_string());
+        if (test == username) {
+            return client;
+        }
+    }
+    // Create a new client if not found
+    pugi::xml_node newClient = clientsNode.append_child("Client");
+    newClient.append_child("Username").text() = username.c_str();
+
+    newClient.append_child("Dark").text() = "false"; // Default to light mode
+    pugi::xml_node resolution = newClient.append_child("Resolution");
+    resolution.append_child("Width").text() = 800; // Default width
+    resolution.append_child("Height").text() = 600; // Default height
+    save();
+    return newClient;
 }
 
-// Set mode (dark/light)
-void Settings::setMode(const std::string& mode)
+pugi::xml_node Settings::findClient(const std::string& username)
 {
-    m_doc.child("settings").child("display").child("mode").text() = mode.c_str();
+    pugi::xml_node clientsNode = m_doc.child("Clients");
+    for (pugi::xml_node client : clientsNode.children("Client"))
+    {
+        std::string test = std::string(client.child("Username").text().as_string());
+        if (test == username) {
+            return client;
+        }
+    }
+    fl_alert("Cannot find user: ", username);
 }
 
-// Get width
-int Settings::getWidth()
+// Get mode
+std::string Settings::getMode(pugi::xml_node user)
 {
-    return m_doc.child("settings").child("display").child("resolution").child("width").text().as_int();
+    return user.child("Dark").text().as_string();
 }
 
-// Set width
-void Settings::setWidth(int width)
+// Set mode
+void Settings::setMode(const std::string& username, const std::string& mode)
 {
-    m_doc.child("settings").child("display").child("resolution").child("width").text() = width;
+    findOrCreateClient(username).child("Dark").text() = mode.c_str();
+    save();
 }
 
-// Get height
-int Settings::getHeight()
+
+std::tuple<int, int> Settings::getRes(pugi::xml_node user)
 {
-    return m_doc.child("settings").child("display").child("resolution").child("height").text().as_int();
+     pugi::xml_node res = user.child("Resolution");
+     return std::make_tuple(res.child("Width").text().as_int(), res.child("Height").text().as_int());
 }
 
 // Set height
-void Settings::setHeight(int height)
+void Settings::setRes(const std::string& username, int height, int width)
 {
-    m_doc.child("settings").child("display").child("resolution").child("height").text() = height;
+    findOrCreateClient(username).child("Resolution").child("Width").text() = width;
+    findOrCreateClient(username).child("Resolution").child("Height").text() = height;
+    save();
 }
 
 // Save changes to the XML file

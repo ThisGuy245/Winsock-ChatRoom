@@ -169,7 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="chat_history.xml" />
-    <Xml Include="settings.xml" />
+    <Xml Include="config.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
