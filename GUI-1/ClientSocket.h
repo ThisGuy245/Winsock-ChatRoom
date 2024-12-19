@@ -1,36 +1,36 @@
-#pragma once
-#include <winsock2.h>
+#ifndef CLIENTSOCKET_H
+#define CLIENTSOCKET_H
+
 #include <string>
-#include <memory>
 #include <stdexcept>
-#include <WS2tcpip.h>
-#include "PlayerDisplay.hpp"
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include "PlayerDisplay.hpp" // Include PlayerDisplay header
 
-class ServerSocket;
+class ClientSocket {
+public:
+    // Constructors
+    explicit ClientSocket(SOCKET socket, PlayerDisplay* playerDisplay);  // Pointer to PlayerDisplay
+    ClientSocket(const std::string& ipAddress, int port, const std::string& username, PlayerDisplay* playerDisplay);
 
-extern PlayerDisplay* globalPlayerDisplay;
-
-struct ClientSocket {
-    ClientSocket(SOCKET socket);
-    ClientSocket(const std::string& ipAddress, int port, const std::string& username);
+    // Destructor
     ~ClientSocket();
 
+    // Methods
     void setUsername(const std::string& username);
     const std::string& getUsername() const;
-
-    void changeUsername(const std::string& newUsername);
-
     void send(const std::string& message);
     bool receive(std::string& message);
-
+    void changeUsername(const std::string& newUsername);
+    void addingPlayer(const std::string& username);
+    void removingPlayer(const std::string& username);
     bool closed();
 
 private:
-    friend class ServerSocket;
     SOCKET m_socket;
     bool m_closed;
     std::string m_username;
-
-    ClientSocket(const ClientSocket& _copy) = delete;
-    ClientSocket& operator=(const ClientSocket& _assign) = delete;
+    PlayerDisplay* playerDisplay;  // Pointer to PlayerDisplay (not a reference)
 };
+
+#endif // CLIENTSOCKET_H

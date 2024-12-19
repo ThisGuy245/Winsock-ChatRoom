@@ -16,7 +16,7 @@ public:
      * @param _port The port number on which the server will listen.
      * @param _playerDisplay A pointer to the PlayerDisplay instance.
      */
-    ServerSocket(int _port, PlayerDisplay* _playerDisplay);
+    ServerSocket(int _port, PlayerDisplay* playerDisplay);
 
     /** Destructor that cleans up server resources. */
     ~ServerSocket();

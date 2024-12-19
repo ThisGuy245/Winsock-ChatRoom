@@ -9,8 +9,8 @@
  * @param _port The port number to bind the server socket.
  * @param _playerDisplay Pointer to the PlayerDisplay object for updating player list.
  */
-ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
-    : m_socket(INVALID_SOCKET), playerDisplay(_playerDisplay)
+ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay)
+    : m_socket(INVALID_SOCKET), playerDisplay(playerDisplay)
 {
     // Initialize Winsock
     WSADATA wsaData;
@@ -80,7 +80,7 @@ std::shared_ptr<ClientSocket> ServerSocket::accept()
         return nullptr;
     }
 
-    return std::make_shared<ClientSocket>(socket);
+    return std::make_shared<ClientSocket>(socket, playerDisplay);
 }
 
 /**
@@ -105,12 +105,10 @@ void ServerSocket::closeAllClients()
     }
     clients.clear();
 }
-
 /**
  * @brief Handles client connections and processes their messages.
  * Accepts new clients, manages username changes, and broadcasts messages to clients.
  */
- // Inside ServerSocket
 void ServerSocket::handleClientConnections() {
     std::shared_ptr<ClientSocket> client = accept();
     if (client) {
@@ -121,7 +119,7 @@ void ServerSocket::handleClientConnections() {
         if (client->receive(username)) {
             client->setUsername(username);
             printf("Username received: %s\n", username.c_str());
-            playerDisplay->addPlayer(username);
+            client->addingPlayer(username);
 
             // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
@@ -153,18 +151,17 @@ void ServerSocket::handleClientConnections() {
                     }
                     // Respond to the client based on whether the username is available
                     if (usernameAvailable) {
-                        // Remove the old username from player display
-                        playerDisplay->removePlayer(c->getUsername());
-                        // Update the client's username
+                        // Update the player's display via the `ClientSocket` methods
+                        c->removingPlayer(c->getUsername());
                         c->setUsername(newUsername);
-                        // Add the new username to the display
-                        playerDisplay->addPlayer(newUsername);
+                        c->addingPlayer(newUsername);
+
                         // Broadcast the username change
                         broadcastMessage("[SERVER]: " + newUsername + " has changed their username.");
                     }
                     else {
-                        // Show an FL_Alert to the user on failure
-                        fl_alert("The username '%s' is already taken. Please choose another one.", newUsername.c_str());
+                        // Notify the client of the failure (no alert as per instructions)
+                        c->send("[SERVER]: The username '" + newUsername + "' is already taken. Please choose another one.");
                     }
 
                     return false;  // Don't remove the client yet, continue processing messages
@@ -181,8 +178,8 @@ void ServerSocket::handleClientConnections() {
                 // Add the username to the list of disconnected users
                 disconnectedUsernames.push_back(username);
 
-                // Remove the client from the player display
-                playerDisplay->removePlayer(username);
+                // Update the player's display via the `ClientSocket` method
+                c->removingPlayer(username);
 
                 // Return true to remove the client from the list
                 return true;
@@ -195,6 +192,4 @@ void ServerSocket::handleClientConnections() {
     for (const auto& username : disconnectedUsernames) {
         broadcastMessage("[SERVER]: " + username + " has disconnected.");
     }
-
-
 }

@@ -1,27 +1,35 @@
+#include <FL/fl_ask.H>
 #include "ClientSocket.h"
 #include "ServerSocket.h"
-#include <FL\fl_ask.H>
 #include <FL/fl_draw.H>
+#include <iostream>
+#include <stdexcept>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 /**
  * @brief Constructor for ClientSocket when using an existing socket.
  * @param socket The socket to associate with this client.
+ * @param playerDisplay Pointer to the PlayerDisplay instance.
  * @throws std::runtime_error if the socket is invalid.
  */
-ClientSocket::ClientSocket(SOCKET socket) : m_socket(socket), m_closed(false) {
+ClientSocket::ClientSocket(SOCKET socket, PlayerDisplay* playerDisplay)
+    : m_socket(socket), m_closed(false), playerDisplay(playerDisplay) {
     if (socket == INVALID_SOCKET) {
         throw std::runtime_error("Invalid socket");
     }
 }
+
 /**
  * @brief Constructor for ClientSocket when creating a new connection to a server.
  * @param ipAddress The IP address of the server to connect to.
  * @param port The port number to connect to.
  * @param username The username to send to the server upon connection.
+ * @param playerDisplay Pointer to the PlayerDisplay instance.
  * @throws std::runtime_error if the connection or socket creation fails.
  */
-ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::string& username)
-    : m_socket(INVALID_SOCKET), m_closed(false), m_username(username) {
+ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::string& username, PlayerDisplay* playerDisplay)
+    : m_socket(INVALID_SOCKET), m_closed(false), m_username(username), playerDisplay(playerDisplay) {
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         throw std::runtime_error("WSAStartup failed");
@@ -59,7 +67,7 @@ ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::st
 }
 
 /**
- * @brief Destructor for ClientSocket class, cleans up the socket and removes the player.
+ * @brief Destructor for ClientSocket class, cleans up the socket.
  */
 ClientSocket::~ClientSocket() {
     if (m_socket != INVALID_SOCKET) {
@@ -141,6 +149,28 @@ void ClientSocket::changeUsername(const std::string& newUsername) {
             // Handle failure case (username already taken, invalid, etc.)
             fl_alert("Failed to change username. The username '%s' is already taken. Please try again.", newUsername.c_str());
         }
+    }
+}
+
+/**
+ * @brief Adds a player to the player list and updates the PlayerDisplay.
+ * @param username The username of the player to add.
+ */
+void ClientSocket::addingPlayer(const std::string& username) {
+    std::cout << "Adding player: " << username << std::endl;
+    if (playerDisplay) {
+        playerDisplay->addPlayer(username); // Add player to the display
+    }
+}
+
+/**
+ * @brief Removes a player from the player list and updates the PlayerDisplay.
+ * @param username The username of the player to remove.
+ */
+void ClientSocket::removingPlayer(const std::string& username) {
+    std::cout << "Removing player: " << username << std::endl;
+    if (playerDisplay) {
+        playerDisplay->removePlayer(username); // Remove player from the display
     }
 }
 
