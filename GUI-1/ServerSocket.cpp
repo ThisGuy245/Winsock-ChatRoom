@@ -4,11 +4,15 @@
 #include <cstdio>
 #include <FL/fl_ask.H>
 
-
-// Constructor: Initializes Winsock and sets up the server socket
+/**
+ * @brief Constructor for ServerSocket class, initializes Winsock and sets up the server socket.
+ * @param _port The port number to bind the server socket.
+ * @param _playerDisplay Pointer to the PlayerDisplay object for updating player list.
+ */
 ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
     : m_socket(INVALID_SOCKET), playerDisplay(_playerDisplay)
 {
+    // Initialize Winsock
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         throw std::runtime_error("WSAStartup failed");
@@ -22,6 +26,7 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
 
     addrinfo* result = NULL;
 
+    // Resolve server address and port
     if (getaddrinfo(NULL, std::to_string(_port).c_str(), &hints, &result) != 0) {
         throw std::runtime_error("Failed to resolve server address or port");
     }
@@ -32,6 +37,7 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
         throw std::runtime_error("Failed to create socket");
     }
 
+    // Bind the socket to the server address
     if (bind(m_socket, result->ai_addr, result->ai_addrlen) == SOCKET_ERROR) {
         freeaddrinfo(result);
         throw std::runtime_error("Failed to bind socket");
@@ -39,6 +45,7 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
 
     freeaddrinfo(result);
 
+    // Listen for incoming client connections
     if (listen(m_socket, SOMAXCONN) == SOCKET_ERROR) {
         throw std::runtime_error("Failed to listen on socket");
     }
@@ -49,7 +56,9 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* _playerDisplay)
     }
 }
 
-// Destructor: Cleans up the socket
+/**
+ * @brief Destructor for ServerSocket class, cleans up the socket.
+ */
 ServerSocket::~ServerSocket()
 {
     closeAllClients();
@@ -57,7 +66,10 @@ ServerSocket::~ServerSocket()
     WSACleanup();
 }
 
-// Accept a new client connection
+/**
+ * @brief Accepts a new client connection.
+ * @return A shared pointer to the ClientSocket for the accepted client, or nullptr if no connection.
+ */
 std::shared_ptr<ClientSocket> ServerSocket::accept()
 {
     SOCKET socket = ::accept(m_socket, NULL, NULL);
@@ -71,7 +83,10 @@ std::shared_ptr<ClientSocket> ServerSocket::accept()
     return std::make_shared<ClientSocket>(socket);
 }
 
-// Broadcast a message to all clients
+/**
+ * @brief Broadcasts a message to all connected clients.
+ * @param message The message to send to all clients.
+ */
 void ServerSocket::broadcastMessage(const std::string& message)
 {
     for (const auto& client : clients) {
@@ -79,7 +94,9 @@ void ServerSocket::broadcastMessage(const std::string& message)
     }
 }
 
-// Gracefully close all clients
+/**
+ * @brief Closes all connected clients and removes them from the list.
+ */
 void ServerSocket::closeAllClients()
 {
     for (auto& client : clients) {
@@ -89,8 +106,10 @@ void ServerSocket::closeAllClients()
     clients.clear();
 }
 
-// Handles all client connections
-// ServerSocket::handleClientConnections() - Add code to handle username change
+/**
+ * @brief Handles client connections and processes their messages.
+ * Accepts new clients, manages username changes, and broadcasts messages to clients.
+ */
 void ServerSocket::handleClientConnections() {
     std::shared_ptr<ClientSocket> client = accept();
     if (client) {
@@ -169,4 +188,3 @@ void ServerSocket::handleClientConnections() {
             return false;
         }), clients.end());
 }
-

@@ -5,6 +5,13 @@
 #include <FL/Fl_Window.H>        // For window class
 #include <FL/Fl_Text_Buffer.H>   // For text buffer class
 
+/**
+ * @brief Constructor initializes the AboutWindow UI with information and a close button
+ *
+ * @param width The width of the window
+ * @param height The height of the window
+ * @param title The title of the window
+ */
 AboutWindow::AboutWindow(int width, int height, const char* title)
     : Fl_Window(width, height, title), close_button(nullptr), info_text(nullptr), buffer(nullptr) {
 
@@ -26,6 +33,9 @@ AboutWindow::AboutWindow(int width, int height, const char* title)
     this->show();
 }
 
+/**
+ * @brief Destructor that cleans up dynamically allocated resources.
+ */
 AboutWindow::~AboutWindow() {
     // Cleanup resources
     delete close_button;
@@ -33,6 +43,9 @@ AboutWindow::~AboutWindow() {
     delete buffer;
 }
 
+/**
+ * @brief Populates the About window with the application's information
+ */
 void AboutWindow::show_about_info() {
     // About page content (example text)
     std::string about_info = "Welcome to the Chat Application!\n\n"
@@ -47,6 +60,12 @@ void AboutWindow::show_about_info() {
     buffer->text(about_info.c_str()); // Set the text in the display
 }
 
+/**
+ * @brief Callback function to close the About window when the close button is clicked
+ *
+ * @param widget The widget that triggered the callback
+ * @param userdata The user data (AboutWindow instance)
+ */
 void AboutWindow::close_callback(Fl_Widget* widget, void* userdata) {
     AboutWindow* page = static_cast<AboutWindow*>(userdata);
     if (page) {

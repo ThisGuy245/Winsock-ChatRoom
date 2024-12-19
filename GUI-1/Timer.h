@@ -5,6 +5,9 @@
 #include <functional>
 #include <FL/Fl.H>
 
+/**
+ * @brief Timer class to manage periodic callbacks.
+ */
 class Timer {
 public:
     using Callback = std::function<void(void*)>;
@@ -12,13 +15,13 @@ public:
     Timer(double duration = 1.0)
         : m_duration(duration), m_callback(nullptr), m_userdata(nullptr), m_active(false) {}
 
-    // Sets the callback to be called when the timer triggers
+    /** Sets the callback to be called when the timer triggers */
     void setCallback(Callback cb) { m_callback = cb; }
 
-    // Sets the user data to pass to the callback
+    /** Sets the user data to pass to the callback */
     void setUserData(void* userdata) { m_userdata = userdata; }
 
-    // Starts the timer
+    /** Starts the timer */
     void start() {
         if (!m_active) {
             m_active = true;
@@ -26,7 +29,7 @@ public:
         }
     }
 
-    // Stops the timer
+    /** Stops the timer */
     void stop() {
         if (m_active) {
             m_active = false;
@@ -34,13 +37,13 @@ public:
         }
     }
 
-    // Restarts the timer
+    /** Restarts the timer */
     void restart() {
         stop();
         start();
     }
 
-    // Destructor: Ensures timer cleanup
+    /** Destructor: Ensures timer cleanup */
     ~Timer() {
         stop();
     }

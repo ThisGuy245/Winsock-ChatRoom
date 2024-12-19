@@ -9,6 +9,14 @@
 #include "SettingsWindow.hpp"
 #include "AboutWindow.h"
 
+/**
+ * @brief Constructor for LobbyPage class.
+ * Initializes the layout, including the menu bar, chat display, input field, and send button.
+ * @param X The x-coordinate of the window.
+ * @param Y The y-coordinate of the window.
+ * @param W The width of the window.
+ * @param H The height of the window.
+ */
 LobbyPage::LobbyPage(int X, int Y, int W, int H)
     : Fl_Group(X, Y, W, H), client(nullptr), server(nullptr), settings(nullptr), about(nullptr) {
     begin();
@@ -21,7 +29,7 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     menuBar->add("About/Application Info", FL_CTRL + 'a', menuCallback, (void*)this);
 
     // Create a scrollable area for chat history and message input
-    scrollArea = new Fl_Scroll(0, 30, W /2, H - 30);
+    scrollArea = new Fl_Scroll(0, 30, W / 2, H - 30);
     scrollArea->type(FL_VERTICAL);
 
     // Display area for chat history with a text buffer
@@ -64,11 +72,23 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     resizable(scrollArea);
 }
 
+/**
+ * @brief Destructor for LobbyPage class.
+ * Cleans up allocated resources, including client and server sockets.
+ */
 LobbyPage::~LobbyPage() {
     delete client;
     delete server;
 }
 
+/**
+ * @brief Resizes the widgets on the LobbyPage.
+ * Called when the window size changes.
+ * @param X The new x-coordinate.
+ * @param Y The new y-coordinate.
+ * @param W The new width of the window.
+ * @param H The new height of the window.
+ */
 void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
     menuBar->resize(0, 0, W, 30);
     scrollArea->resize(0, 30, W, H - 30);
@@ -78,6 +98,12 @@ void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
     playerDisplay->resize(W - 240, Y + 30, 240, H - 90);
 }
 
+/**
+ * @brief Hosts a server and sets up the client.
+ * Initializes the server and connects the client to it.
+ * @param ip The IP address to host the server on.
+ * @param username The username of the client.
+ */
 void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     this->username = username;
     server = new ServerSocket(12345, playerDisplay);
@@ -92,24 +118,39 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     }
 }
 
-
+/**
+ * @brief Joins an existing server as a client.
+ * @param ip The IP address of the server to join.
+ * @param username The username of the client.
+ */
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     this->username = username;  // Set the username for this session
     client = new ClientSocket(ip, 12345, username);  // Client joins the server
     chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
 }
 
+/**
+ * @brief Handles a client leaving the server.
+ * Displays a message in the chat history when a client leaves.
+ * @param username The username of the client leaving.
+ */
 void LobbyPage::clientLeft(const std::string& username) {
     chatBuffer->append(("[SERVER]: " + username + " has left the server\n").c_str());
 }
 
-
+/**
+ * @brief Sends a message to the server.
+ * @param message The message to be sent.
+ */
 void LobbyPage::sendMessage(const std::string& message) {
     if (client) {
         client->send(message);  // Send the message, not the username
     }
 }
 
+/**
+ * @brief Receives incoming messages from the server and updates the chat history.
+ */
 void LobbyPage::receiveMessages() {
     std::string message;
     if (client && client->receive(message)) {
@@ -121,6 +162,10 @@ void LobbyPage::receiveMessages() {
     }
 }
 
+/**
+ * @brief Changes the username of the client.
+ * @param newUsername The new username to be set.
+ */
 void LobbyPage::changeUsername(const std::string& newUsername) {
     try {
         client->changeUsername(newUsername);  // Call ClientSocket's method
@@ -132,16 +177,20 @@ void LobbyPage::changeUsername(const std::string& newUsername) {
     }
 }
 
-
-
-
-// This is called every frame to keep the chat updated
+/**
+ * @brief Updates the LobbyPage on each frame.
+ * Calls the `receiveMessages` method to update the chat history.
+ */
 void LobbyPage::Update() {
     receiveMessages();
 }
 
-
-
+/**
+ * @brief Callback function for the menu bar.
+ * Handles different menu selections such as Disconnect, Quit, Settings, and About.
+ * @param widget The widget that triggered the callback.
+ * @param userdata A pointer to the LobbyPage instance.
+ */
 void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     LobbyPage* page = static_cast<LobbyPage*>(userdata);
     Fl_Menu_Bar* menu = static_cast<Fl_Menu_Bar*>(widget);
@@ -200,4 +249,3 @@ void LobbyPage::menuCallback(Fl_Widget* widget, void* userdata) {
     }
     }
 }
-

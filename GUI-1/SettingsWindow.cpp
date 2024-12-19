@@ -11,18 +11,30 @@
 #include <FL/Fl_Input.H>
 #include <FL/fl_draw.H>
 
-// Constructor initializes the SettingsWindow and sets up the UI
+/**
+ * @brief Constructor initializes the SettingsWindow and sets up the UI
+ *
+ * @param width The width of the window
+ * @param height The height of the window
+ * @param title The title of the window
+ * @param mainWindow Pointer to the main window object
+ * @param lobbyPage Pointer to the lobby page object
+ */
 SettingsWindow::SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow, LobbyPage* lobbyPage)
-    : Fl_Window(width, height, title), mainWindow(mainWindow), lobbyPage(lobbyPage) {  // Initialize lobbyPage here
+    : Fl_Window(width, height, title), mainWindow(mainWindow), lobbyPage(lobbyPage) {
     setup_ui();
     this->end();  // Finalize the window
 }
 
-// Destructor (no need for manual cleanup since FLTK manages widget memory)
+/**
+ * @brief Destructor (no need for manual cleanup since FLTK manages widget memory)
+ */
 SettingsWindow::~SettingsWindow() {
 }
 
-// Setup the UI components for the settings window
+/**
+ * @brief Setup the UI components for the settings window
+ */
 void SettingsWindow::setup_ui() {
     // Username input section
     Fl_Box* username_label = new Fl_Box(20, 20, 100, 30, "Change Username:");
@@ -60,7 +72,9 @@ void SettingsWindow::setup_ui() {
         }, this);
 }
 
-// Apply changes based on user input (resolution, dark mode, and username)
+/**
+ * @brief Apply changes based on user input (resolution, dark mode, and username)
+ */
 void SettingsWindow::apply_changes() {
     // Apply changes only if the lobbyPage is not null
     if (lobbyPage) {
@@ -77,8 +91,9 @@ void SettingsWindow::apply_changes() {
     }
 }
 
-
-// Apply selected resolution to the main window
+/**
+ * @brief Apply selected resolution to the main window
+ */
 void SettingsWindow::apply_resolution() {
     int selected = resolution_choice->value();
     int width = 800, height = 600;
@@ -93,7 +108,9 @@ void SettingsWindow::apply_resolution() {
     mainWindow->setResolution(width, height);  // Update main window resolution
 }
 
-// Apply dark mode settings to the lobby page and other widgets
+/**
+ * @brief Apply dark mode settings to the lobby page and other widgets
+ */
 void SettingsWindow::apply_dark_mode() {
     bool isDarkMode = theme_toggle->value();
 
