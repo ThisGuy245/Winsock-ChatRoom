@@ -107,6 +107,7 @@ void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
 void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     this->username = username;
     server = new ServerSocket(12345, playerDisplay, "config.xml");
+
     chatBuffer->append("Server has been created\n");
 
     try {

@@ -27,8 +27,6 @@ public:
     void changeUsername(const std::string& newUsername);
     void addingPlayer(const std::string& username);
     void removingPlayer(const std::string& username);
-
-    bool processServerCommand(const std::string& message);
     void updateLocalSettings(const std::string& settingsData);
     void applyUserSettings(); // New
     void updateResolution(int width, int height); // New

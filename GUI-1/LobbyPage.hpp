@@ -31,7 +31,6 @@ public:
     void receiveMessages();
     void setUsername(const std::string& user) { username = user; }
     void clientLeft(const std::string& username);
-    void applyStyles();
     void resizeWidgets(int X, int Y, int W, int H); // Resize widgets
     void changeUsername(const std::string& newUsername);
 

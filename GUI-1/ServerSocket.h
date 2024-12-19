@@ -38,10 +38,7 @@ public:
      * @param message The message to be broadcast.
      */
     void broadcastMessage(const std::string& message);
-    void broadcastCommand(const std::string& command, const std::string& message);
 
-    void notifyPlayerAdded(const std::string& username);
-    void notifyPlayerRemoved(const std::string& username);
 
     bool isUsernameTaken(const std::string& username);
     bool handleUsernameChange(std::shared_ptr<ClientSocket> client, const std::string& newUsername);

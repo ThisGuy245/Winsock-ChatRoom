@@ -2,7 +2,7 @@
 <Clients>
 	<Client>
 		<Username>Thomas</Username>
-		<Dark>false</Dark>
+		<Dark>true</Dark>
 		<Resolution>
 			<Width>800</Width>
 			<Height>600</Height>
@@ -26,6 +26,22 @@
 	</Client>
 	<Client>
 		<Username>Greg</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>fasfsa</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>ftddkg</Username>
 		<Dark>false</Dark>
 		<Resolution>
 			<Width>800</Width>
