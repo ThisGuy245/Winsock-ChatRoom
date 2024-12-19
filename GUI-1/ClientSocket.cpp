@@ -1,6 +1,5 @@
 #include "ClientSocket.h"
 #include "ServerSocket.h"
-#include "PlayerDisplay.hpp"
 #include <FL\fl_ask.H>
 #include <FL/fl_draw.H>
 
@@ -14,9 +13,6 @@ ClientSocket::ClientSocket(SOCKET socket) : m_socket(socket), m_closed(false) {
         throw std::runtime_error("Invalid socket");
     }
 }
-
-PlayerDisplay* globalPlayerDisplay = nullptr;
-
 /**
  * @brief Constructor for ClientSocket when creating a new connection to a server.
  * @param ipAddress The IP address of the server to connect to.
@@ -60,19 +56,12 @@ ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::st
 
     // Send username to the server upon connection
     send(m_username);
-
-    if (globalPlayerDisplay) {
-        globalPlayerDisplay->addPlayer(m_username);
-    }
 }
 
 /**
  * @brief Destructor for ClientSocket class, cleans up the socket and removes the player.
  */
 ClientSocket::~ClientSocket() {
-    if (globalPlayerDisplay) {
-        globalPlayerDisplay->removePlayer(m_username);
-    }
     if (m_socket != INVALID_SOCKET) {
         closesocket(m_socket);
     }
@@ -83,10 +72,6 @@ ClientSocket::~ClientSocket() {
  * @param username The new username to set for this client.
  */
 void ClientSocket::setUsername(const std::string& username) {
-    if (globalPlayerDisplay) {
-        globalPlayerDisplay->removePlayer(m_username);
-        globalPlayerDisplay->addPlayer(username);
-    }
     m_username = username;
 }
 
@@ -150,11 +135,6 @@ void ClientSocket::changeUsername(const std::string& newUsername) {
     std::string response;
     if (receive(response)) {
         if (response == "USERNAME_CHANGED") {
-            // If server confirms the change, update the display
-            if (globalPlayerDisplay) {
-                globalPlayerDisplay->removePlayer(m_username);  // Remove old username
-                globalPlayerDisplay->addPlayer(newUsername);    // Add new username
-            }
             fl_alert("Your username has been successfully changed to '%s'.", newUsername.c_str());
         }
         else if (response == "USERNAME_TAKEN") {

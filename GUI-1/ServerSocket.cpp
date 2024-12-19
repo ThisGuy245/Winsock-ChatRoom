@@ -110,6 +110,7 @@ void ServerSocket::closeAllClients()
  * @brief Handles client connections and processes their messages.
  * Accepts new clients, manages username changes, and broadcasts messages to clients.
  */
+ // Inside ServerSocket
 void ServerSocket::handleClientConnections() {
     std::shared_ptr<ClientSocket> client = accept();
     if (client) {
@@ -130,17 +131,19 @@ void ServerSocket::handleClientConnections() {
         clients.push_back(client);
     }
 
+    // Temporary list to track disconnected clients
+    std::vector<std::string> disconnectedUsernames;
+
     // Process messages from connected clients
     clients.erase(std::remove_if(clients.begin(), clients.end(),
         [&](const std::shared_ptr<ClientSocket>& c) {
             std::string message;
-
+            std::string username = c->getUsername();
             if (c->receive(message)) {
                 // Handle username change command
                 if (message.rfind("/change_username ", 0) == 0) {
                     std::string newUsername = message.substr(17); // Extract the new username
                     bool usernameAvailable = true;
-
                     // Check if the username is already taken
                     for (const auto& existingClient : clients) {
                         if (existingClient->getUsername() == newUsername) {
@@ -148,21 +151,16 @@ void ServerSocket::handleClientConnections() {
                             break;
                         }
                     }
-
                     // Respond to the client based on whether the username is available
                     if (usernameAvailable) {
                         // Remove the old username from player display
                         playerDisplay->removePlayer(c->getUsername());
-
                         // Update the client's username
                         c->setUsername(newUsername);
-
                         // Add the new username to the display
                         playerDisplay->addPlayer(newUsername);
-
                         // Broadcast the username change
                         broadcastMessage("[SERVER]: " + newUsername + " has changed their username.");
-
                     }
                     else {
                         // Show an FL_Alert to the user on failure
@@ -178,13 +176,25 @@ void ServerSocket::handleClientConnections() {
                 }
             }
 
+            // Check if the client has closed (disconnected)
             if (c->closed()) {
-                broadcastMessage("[SERVER]: " + c->getUsername() + " has disconnected.");
-                // Remove the player from the list upon disconnect
-                playerDisplay->removePlayer(c->getUsername());
+                // Add the username to the list of disconnected users
+                disconnectedUsernames.push_back(username);
+
+                // Remove the client from the player display
+                playerDisplay->removePlayer(username);
+
+                // Return true to remove the client from the list
                 return true;
             }
 
             return false;
         }), clients.end());
+
+    // Now broadcast all disconnection messages
+    for (const auto& username : disconnectedUsernames) {
+        broadcastMessage("[SERVER]: " + username + " has disconnected.");
+    }
+
+
 }
