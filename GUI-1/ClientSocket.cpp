@@ -16,8 +16,6 @@ ClientSocket::ClientSocket(SOCKET socket, PlayerDisplay* playerDisplay, const st
     if (socket == INVALID_SOCKET) {
         throw std::runtime_error("Invalid socket");
     }
-
-    applyUserSettings(); // Apply user settings on initialization
 }
 
 /**
@@ -97,47 +95,6 @@ void ClientSocket::applyUserSettings() {
         fl_message("Light mode enabled for user: %s", m_username.c_str());
     }
 }
-
-
-/**
- * @brief Update the user's resolution settings.
- */
-void ClientSocket::updateResolution(int width, int height) {
-    m_settings.setRes(m_username, width, height);
-    fl_message("Resolution updated to: %dx%d", width, height);
-}
-
-/**
- * @brief Toggle the user's dark mode setting.
- */
-void ClientSocket::toggleDarkMode() {
-    pugi::xml_node user = m_settings.findOrCreateClient(m_username);
-    std::string currentMode = m_settings.getMode(user);
-    std::string newMode = (currentMode == "true") ? "false" : "true";
-    m_settings.setMode(m_username, newMode);
-    fl_message("Dark mode toggled to: %s", newMode.c_str());
-}
-
-/**
- * @brief Update local settings based on server data.
- */
-void ClientSocket::updateLocalSettings(const std::string& settingsData) {
-    pugi::xml_document doc;
-    if (!doc.load_string(settingsData.c_str())) {
-        std::cerr << "Failed to parse settings data from server" << std::endl;
-        return;
-    }
-
-    if (!doc.save_file("client_settings.xml")) {
-        std::cerr << "Failed to save settings to local file" << std::endl;
-    }
-    else {
-        std::cout << "Settings updated and saved locally" << std::endl;
-    }
-}
-
-// Remaining methods (unchanged): addingPlayer, removingPlayer, processServerCommand, etc.
-
 /**
  * @brief Sets the username for this client and updates the global player display.
  * @param username The new username to set for this client.
@@ -220,7 +177,6 @@ void ClientSocket::changeUsername(const std::string& newUsername) {
  * @param username The username of the player to add.
  */
 void ClientSocket::addingPlayer(const std::string& username) {
-    std::cout << "Adding player: " << username << std::endl;
     if (playerDisplay) {
         playerDisplay->addPlayer(username); // Add player to the display
     }
@@ -231,42 +187,49 @@ void ClientSocket::addingPlayer(const std::string& username) {
  * @param username The username of the player to remove.
  */
 void ClientSocket::removingPlayer(const std::string& username) {
-    std::cout << "Removing player: " << username << std::endl;
     if (playerDisplay) {
         playerDisplay->removePlayer(username); // Remove player from the display
     }
 }
 
+
 /**
- * @brief Processes incoming messages and executes commands from the server.
- * @param message The received message from the server.
- * @return True if a message was processed, false otherwise.
+ * @brief Update the user's resolution settings.
  */
-bool ClientSocket::processServerCommand(const std::string& message) {
-    auto delimiterPos = message.find(':');
-    if (delimiterPos == std::string::npos) {
-        return false; // No valid command
+void ClientSocket::updateResolution(int width, int height) {
+    m_settings.setRes(m_username, width, height);
+    fl_message("Resolution updated to: %dx%d", width, height);
+}
+
+/**
+ * @brief Toggle the user's dark mode setting.
+ */
+void ClientSocket::toggleDarkMode() {
+    pugi::xml_node user = m_settings.findOrCreateClient(m_username);
+    std::string currentMode = m_settings.getMode(user);
+    std::string newMode = (currentMode == "true") ? "false" : "true";
+    m_settings.setMode(m_username, newMode);
+    fl_message("Dark mode toggled to: %s", newMode.c_str());
+}
+
+/**
+ * @brief Update local settings based on server data.
+ */
+void ClientSocket::updateLocalSettings(const std::string& settingsData) {
+    pugi::xml_document doc;
+    if (!doc.load_string(settingsData.c_str())) {
+        std::cerr << "Failed to parse settings data from server" << std::endl;
+        return;
     }
 
-    std::string command = message.substr(0, delimiterPos);
-    std::string content = message.substr(delimiterPos + 1);
-
-    if (command == "ADD_PLAYER") {
-        addingPlayer(content);
-    }
-    else if (command == "REMOVE_PLAYER") {
-        removingPlayer(content);
-    }
-    else if (command == "SETTINGS_UPDATE") {
-        // Process settings updates (e.g., update local XML file)
-        updateLocalSettings(content);
+    if (!doc.save_file("client_settings.xml")) {
+        std::cerr << "Failed to save settings to local file" << std::endl;
     }
     else {
-        // Handle other commands or default behavior
-        return false;
+        std::cout << "Settings updated and saved locally" << std::endl;
     }
-    return true;
 }
+
 
 /**
  * @brief Checks if the client socket is closed.

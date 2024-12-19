@@ -98,27 +98,6 @@ void ServerSocket::broadcastMessage(const std::string& message)
     }
 }
 
-/**
- * @brief Broadcasts a message with a specific command to all connected clients.
- * @param command The command type (e.g., ADD_PLAYER, REMOVE_PLAYER).
- * @param message The message content.
- */
-void ServerSocket::broadcastCommand(const std::string& command, const std::string& message) {
-    std::string fullMessage = command + ":" + message;
-    for (const auto& client : clients) {
-        client->send(fullMessage);
-    }
-}
-
-// Example Usage
-void ServerSocket::notifyPlayerAdded(const std::string& username) {
-    broadcastCommand("ADD_PLAYER", username);
-}
-
-void ServerSocket::notifyPlayerRemoved(const std::string& username) {
-    broadcastCommand("REMOVE_PLAYER", username);
-}
-
 
 /**
  * @brief Closes all connected clients and removes them from the list.
@@ -150,7 +129,7 @@ void ServerSocket::handleClientConnections() {
                 fl_alert("This Username is already in use!");
                 return;
             }
-
+            client->addingPlayer(username);
             // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
         }
