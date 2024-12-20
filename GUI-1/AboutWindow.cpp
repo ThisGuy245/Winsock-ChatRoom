@@ -65,7 +65,7 @@ void AboutWindow::show_about_info() {
         "9. **Message Notifications**: Receive notifications for new messages while active.\n\n"
 
         "How to Use the Features:\n"
-        "1. Check Server Version via /SV.\n"
+        "1. Check Server Version via SV/.\n"
         "2. Whisper feature in the form W/[user]'.\n"
         "3. Dark mode and Change username in Settings\n\n"
 

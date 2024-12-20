@@ -181,7 +181,11 @@ void ServerSocket::handleClientConnections() {
                     c->send("[SERVER]: Invalid whisper format. Usage: W/username message");
                 }
             }
-
+            // Handle SV/ command to send server version privately
+            else if (message.rfind("SV/", 0) == 0) {  // Check if the message starts with SV/
+                std::string version = "Server Version: 1.0.0";  // Specify your version here
+                c->send("[SERVER]: " + version);  // Send the version privately to the client
+            }
             // Handle username change command
             else if (message.rfind("/change_username ", 0) == 0) {
                 std::string newUsername = message.substr(17); // Extract the new username

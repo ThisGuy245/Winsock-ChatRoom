@@ -41,7 +41,7 @@
 		</Resolution>
 	</Client>
 	<Client>
-		<Username></Username>
+		<Username />
 		<Dark>false</Dark>
 		<Resolution>
 			<Width>600</Width>
@@ -50,6 +50,22 @@
 	</Client>
 	<Client>
 		<Username>John</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>George</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>asg</Username>
 		<Dark>false</Dark>
 		<Resolution>
 			<Width>800</Width>
