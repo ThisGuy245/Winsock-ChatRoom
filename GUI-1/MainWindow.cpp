@@ -52,9 +52,6 @@ MainWindow::MainWindow(int width, int height)
     size_range(800, 600, 10000, 10000);
 }
 
-
-
-
 /**
  * @brief Destructor to clean up dynamically allocated pages.
  */

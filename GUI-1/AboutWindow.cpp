@@ -47,18 +47,34 @@ AboutWindow::~AboutWindow() {
  * @brief Populates the About window with the application's information
  */
 void AboutWindow::show_about_info() {
-    // About page content (example text)
-    std::string about_info = "Welcome to the Chat Application!\n\n"
+    // About page content with detailed features
+    std::string about_info =
+        "Welcome to the Chat Application!\n\n"
         "This application allows you to chat with others, join rooms, "
         "send messages, and more.\n\n"
-        "To use the application:\n"
-        "1. Enter your username on the home page.\n"
-        "2. Choose a room and click 'Join'.\n"
-        "3. Start chatting with others!\n\n"
-        "Developed by: Thomas Isherwood";
+
+        "Features:\n"
+        "1. **User Authentication**: Enter your username on the home page to get started.\n"
+        "2. **Room Management**: Create or join chat rooms to interact with other users.\n"
+        "3. **Real-Time Messaging**: Send and receive messages in real-time with other participants.\n"
+        "4. **Private Messaging**: Send private messages to specific users in the room.\n"
+        "5. **Dark Mode**: Toggle dark mode for a more comfortable night-time experience.\n"
+        "6. **Chat History**: View your past conversations stored for future reference.\n"
+        "7. **Customizable Settings**: Adjust user preferences like username, theme, and resolution.\n"
+        "8. **User List**: View a list of connected users in the current room.\n"
+        "9. **Message Notifications**: Receive notifications for new messages while active.\n\n"
+
+        "How to Use the Features:\n"
+        "1. Check Server Version via /SV.\n"
+        "2. Whisper feature in the form W/[user]'.\n"
+        "3. Dark mode and Change username in Settings\n\n"
+
+        "Developed by: Thomas Isherwood\n"
+        "Version: 1.0";
 
     buffer->text(about_info.c_str()); // Set the text in the display
 }
+
 
 /**
  * @brief Callback function to close the About window when the close button is clicked
