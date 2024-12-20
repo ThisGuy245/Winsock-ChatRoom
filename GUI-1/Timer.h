@@ -6,8 +6,7 @@
 #include <FL/Fl.H>
 
 /**
- * @class Timer
- * @brief A utility class for managing periodic tasks using FLTK's timeout functionality.
+ * @brief Timer class to manage periodic callbacks.
  */
 class Timer {
 public:
@@ -20,21 +19,14 @@ public:
     Timer(double duration = 1.0)
         : m_duration(duration), m_callback(nullptr), m_userdata(nullptr), m_active(false) {}
 
-    /**
-     * @brief Sets the callback function to be called when the timer triggers.
-     * @param cb The callback function.
-     */
+
+    /** Sets the callback to be called when the timer triggers */
     void setCallback(Callback cb) { m_callback = cb; }
 
-    /**
-     * @brief Sets the user data to pass to the callback function.
-     * @param userdata Pointer to user data.
-     */
+    /** Sets the user data to pass to the callback */
     void setUserData(void* userdata) { m_userdata = userdata; }
 
-    /**
-     * @brief Starts the timer.
-     */
+    /** Starts the timer */
     void start() {
         if (!m_active) {
             m_active = true;
@@ -42,9 +34,7 @@ public:
         }
     }
 
-    /**
-     * @brief Stops the timer.
-     */
+    /** Stops the timer */
     void stop() {
         if (m_active) {
             m_active = false;

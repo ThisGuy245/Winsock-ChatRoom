@@ -48,9 +48,6 @@
     <ClCompile Include="HomePage.cpp">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClCompile>
-    <ClCompile Include="GameManager.cpp">
-      <Filter>Source Files\GUI\Game</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,6 +66,15 @@
     <ClCompile Include="ChatData.cpp">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerDisplay.cpp">
+      <Filter>Source Files\GUI\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="AboutWindow.cpp">
+      <Filter>Source Files\GUI\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsWindow.cpp">
+      <Filter>Source Files\GUI\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainWindow.h">
@@ -85,9 +91,6 @@
     </ClInclude>
     <ClInclude Include="HomePage.hpp">
       <Filter>Source Files\GUI\Pages</Filter>
-    </ClInclude>
-    <ClInclude Include="GameManager.h">
-      <Filter>Source Files\GUI\Game</Filter>
     </ClInclude>
     <ClInclude Include="MyWidget.h">
       <Filter>Source Files\GUI\Components</Filter>
@@ -107,6 +110,15 @@
     <ClInclude Include="ChatData.hpp">
       <Filter>Source Files\GUI\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="AboutWindow.h">
+      <Filter>Source Files\GUI\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingsWindow.hpp">
+      <Filter>Source Files\GUI\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerDisplay.hpp">
+      <Filter>Source Files\GUI\Pages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\Downloads\DrawBox.png">
@@ -115,6 +127,9 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="chat_history.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
+    <Xml Include="config.xml">
       <Filter>Resource Files</Filter>
     </Xml>
   </ItemGroup>

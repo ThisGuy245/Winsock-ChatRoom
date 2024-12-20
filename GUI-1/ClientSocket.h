@@ -1,60 +1,51 @@
-#pragma once
-#include <winsock2.h>
+#ifndef CLIENTSOCKET_H
+#define CLIENTSOCKET_H
+
 #include <string>
-#include <memory>
 #include <stdexcept>
-#include <WS2tcpip.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include "PlayerDisplay.hpp" // Include PlayerDisplay header
+#include "Settings.h"        // Include Settings header
+#include <tuple>
 
-/**
- * @brief Represents a client-side socket for communication with a server or peer.
- */
-struct ClientSocket {
-    /**
-     * @brief Constructs a ClientSocket instance from an existing socket.
-     * @param socket The existing socket descriptor.
-     */
-    ClientSocket(SOCKET socket);
+class MainWindow;
 
-    /**
-     * @brief Constructs a ClientSocket instance and connects to a server.
-     * @param ipAddress The server's IP address.
-     * @param port The server's port number.
-     */
-    ClientSocket(const std::string& ipAddress, int port);
+class ClientSocket {
+public:
+    // Constructors
+    explicit ClientSocket(SOCKET socket, PlayerDisplay* playerDisplay, const std::string& settings);
+    ClientSocket(const std::string& ipAddress, int port, const std::string& username,
+        PlayerDisplay* playerDisplay, const std::string& settings, MainWindow* mainWindow);
 
-    /**
-     * @brief Destructor that cleans up the socket resources.
-     */
+    // Destructor
     ~ClientSocket();
 
-    /**
-     * @brief Receives a message from the socket.
-     * @param sender The variable to store the sender's identifier.
-     * @param _message The variable to store the received message.
-     * @return True if the message was received successfully, false otherwise.
-     */
-    bool receive(std::string& sender, std::string& _message);
-
-    /**
-     * @brief Sends a message to the connected peer.
-     * @param username The username of the sender.
-     * @param _message The message to be sent.
-     */
-    void send(const std::string& username, const std::string& _message);
-
-    /**
-     * @brief Checks if the socket has been closed.
-     * @return True if the socket is closed, false otherwise.
-     */
+    // Methods
+    void setUsername(const std::string& username);
+    const std::string& getUsername() const;
+    void send(const std::string& message);
+    bool receive(std::string& message);
+    void changeUsername(const std::string& newUsername);
+    void addingPlayer(const std::string& username);
+    void removingPlayer(const std::string& username);
+    void updateLocalSettings(const std::string& settingsData);
+    void applyUserSettings(); // New
+    void updateResolution(int width, int height); // New
+    void toggleDarkMode(); // New
     bool closed();
 
+    Settings m_settings;          // Reference to Settings
+    PlayerDisplay* playerDisplay;  // Pointer to PlayerDisplay
+
 private:
-    friend struct ServerSocket; ///< Grants ServerSocket access to private members.
-
-    SOCKET m_socket; ///< The underlying socket descriptor.
-    bool m_closed; ///< Indicates if the socket is closed.
-
-    // Prevent copying
-    ClientSocket(const ClientSocket& _copy);
-    ClientSocket& operator=(const ClientSocket& _assign);
+    friend struct ServerSocket;
+    SOCKET m_socket;
+    bool m_closed;
+    std::string m_username;
+    MainWindow* mainWindow;
+    
 };
+
+#endif // CLIENTSOCKET_H
+

@@ -76,6 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -90,6 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,6 +107,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>fltk\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -122,6 +125,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>fltk\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,31 +137,35 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AboutWindow.cpp" />
     <ClCompile Include="ChatData.cpp" />
     <ClCompile Include="ClientSocket.cpp" />
     <ClCompile Include="fltk\src\Fl_Generic_Image.cpp" />
-    <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="HomePage.cpp" />
     <ClCompile Include="LobbyPage.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyWidget.cpp" />
+    <ClCompile Include="PlayerDisplay.cpp" />
     <ClCompile Include="pugixml.cpp" />
     <ClCompile Include="ServerSocket.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="SettingsWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AboutWindow.h" />
     <ClInclude Include="ChatData.hpp" />
     <ClInclude Include="ClientSocket.h" />
-    <ClInclude Include="GameManager.h" />
     <ClInclude Include="HomePage.hpp" />
     <ClInclude Include="LobbyPage.hpp" />
     <ClInclude Include="MyWidget.h" />
+    <ClInclude Include="PlayerDisplay.hpp" />
     <ClInclude Include="pugiconfig.hpp" />
     <ClInclude Include="pugixml.hpp" />
     <ClInclude Include="ServerSocket.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="SettingsWindow.hpp" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +173,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="chat_history.xml" />
+    <Xml Include="config.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

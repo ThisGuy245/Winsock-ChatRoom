@@ -1,4 +1,3 @@
-// HomePage.cpp
 #include "HomePage.hpp"
 #include "MainWindow.h"
 #include "LobbyPage.hpp"
@@ -8,6 +7,15 @@
 #include <ws2tcpip.h>
 #include <iostream>
 
+/**
+ * @brief Constructor for HomePage class.
+ * Initializes the user interface for setting a username and joining or hosting a server.
+ * @param X The x-coordinate of the window.
+ * @param Y The y-coordinate of the window.
+ * @param W The width of the window.
+ * @param H The height of the window.
+ * @param parent A pointer to the parent MainWindow instance.
+ */
 HomePage::HomePage(int X, int Y, int W, int H, MainWindow* parent)
     : Fl_Group(X, Y, W, H), mainWindow(parent) {
 
@@ -27,6 +35,9 @@ HomePage::HomePage(int X, int Y, int W, int H, MainWindow* parent)
     end();  // Finalize the layout
 }
 
+/**
+ * @brief Destructor for HomePage class. Cleans up allocated UI components.
+ */
 HomePage::~HomePage() {
     delete usernameInput;
     delete ipInput;
@@ -34,6 +45,12 @@ HomePage::~HomePage() {
     delete joinButton;
 }
 
+/**
+ * @brief Callback function for the "Host" button.
+ * Validates user input and attempts to host a server.
+ * @param widget The widget that triggered the callback.
+ * @param userdata A pointer to the HomePage instance.
+ */
 void HomePage::hostButtonCallback(Fl_Widget* widget, void* userdata) {
     HomePage* homePage = static_cast<HomePage*>(userdata);
     if (!homePage) return;
@@ -57,6 +74,12 @@ void HomePage::hostButtonCallback(Fl_Widget* widget, void* userdata) {
     }
 }
 
+/**
+ * @brief Callback function for the "Join" button.
+ * Validates user input and attempts to join an existing server.
+ * @param widget The widget that triggered the callback.
+ * @param userdata A pointer to the HomePage instance.
+ */
 void HomePage::joinButtonCallback(Fl_Widget* widget, void* userdata) {
     HomePage* homePage = static_cast<HomePage*>(userdata);
     if (!homePage) return;
@@ -85,7 +108,12 @@ void HomePage::joinButtonCallback(Fl_Widget* widget, void* userdata) {
     }
 }
 
-
+/**
+ * @brief Retrieves the local IP address of the machine.
+ * Uses `gethostname` and `getaddrinfo` to resolve the local IP.
+ * @return A string containing the local IP address.
+ * @throws std::runtime_error if there is an issue retrieving the local IP.
+ */
 std::string HomePage::getLocalIPAddress() {
     char hostname[256];
     if (gethostname(hostname, sizeof(hostname)) == SOCKET_ERROR) {

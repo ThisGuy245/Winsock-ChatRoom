@@ -1,52 +1,61 @@
 #ifndef SERVERSOCKET_H
 #define SERVERSOCKET_H
 
-#include <WinSock2.h>
+#include <winsock2.h>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 #include <string>
 #include "ClientSocket.h"
+#include "PlayerDisplay.hpp"  // Include the header where PlayerDisplay is declared
+#include "Settings.h"
 
-/**
- * @class ServerSocket
- * @brief Manages server-side networking, handling client connections and broadcasting messages.
- */
-class ServerSocket {
+struct ServerSocket
+{
 public:
-    /**
-     * @brief Constructs a ServerSocket bound to the specified port.
-     * @param port The port number to bind the server socket.
-     */
-    ServerSocket(int port);
 
+    std::vector<std::shared_ptr<ClientSocket>> clients; ///< Stores connected clients
     /**
-     * @brief Destructor for ServerSocket. Closes the socket and cleans up resources.
+     * @brief Constructor that initializes the server socket.
+     * @param _port The port number on which the server will listen.
+     * @param _playerDisplay A pointer to the PlayerDisplay instance.
      */
+    ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::string& settingsPath);
+
+    /** Destructor that cleans up server resources. */
     ~ServerSocket();
 
     /**
-     * @brief Accepts a new client connection.
-     * @return A shared pointer to the connected ClientSocket instance.
+     * @brief Accepts a new client connection and returns a shared pointer to the new client socket.
+     * @return A shared pointer to the accepted ClientSocket.
      */
     std::shared_ptr<ClientSocket> accept();
 
+    /** Closes all client connections. */
+    void closeAllClients();
+
     /**
-     * @brief Handles client connections, to be periodically called (e.g., using a timer).
+     * @brief Broadcasts a message to all connected clients.
+     * @param message The message to be broadcast.
      */
+    void broadcastMessage(const std::string& message);
+
+
+    bool isUsernameTaken(const std::string& username);
+    bool handleUsernameChange(std::shared_ptr<ClientSocket> client, const std::string& newUsername);
+
+
+    /** Handles all client connections and incoming messages. */
     void handleClientConnections();
 
-    /**
-     * @brief Broadcasts a message to all connected clients except the specified one.
-     * @param message The message to broadcast.
-     * @param excludeClient A shared pointer to the client to exclude from the broadcast (default is nullptr).
-     */
-    void broadcastMessage(const std::string& message, std::shared_ptr<ClientSocket> excludeClient = nullptr);
+    PlayerDisplay* playerDisplay; ///< Pointer to the PlayerDisplay instance
+    Settings m_settings; ///< Manage client settings via XML
 
 private:
-    SOCKET m_socket;                                   /**< The server socket instance. */
-    std::vector<std::shared_ptr<ClientSocket>> clients; /**< List of currently connected clients. */
-    std::unordered_map<std::shared_ptr<ClientSocket>, std::string> clientUsernames; /**< Map of clients to their usernames. */
+    SOCKET m_socket;  ///< Main server socket
+    
+    // Disable copying and assignment
+    ServerSocket(const ServerSocket& _copy) = delete;
+    ServerSocket& operator=(const ServerSocket& _assign) = delete; 
 };
 
 #endif // SERVERSOCKET_H
