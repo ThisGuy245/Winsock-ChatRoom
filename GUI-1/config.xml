@@ -2,14 +2,54 @@
 <Clients>
 	<Client>
 		<Username>Thomas</Username>
-		<Dark>true</Dark>
+		<Dark>false</Dark>
 		<Resolution>
 			<Width>600</Width>
 			<Height>800</Height>
 		</Resolution>
 	</Client>
 	<Client>
+		<Username>Joiner</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>Greg</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
 		<Username>Jules</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>Matey</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username></Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>600</Width>
+			<Height>800</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>John</Username>
 		<Dark>false</Dark>
 		<Resolution>
 			<Width>800</Width>

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<Clients>
+	<Client>
+		<Username />
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>600</Width>
+			<Height>800</Height>
+		</Resolution>
+	</Client>
+</Clients>

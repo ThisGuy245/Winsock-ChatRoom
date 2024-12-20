@@ -16,9 +16,6 @@ SettingsWindow::SettingsWindow(int width, int height, const char* title, MainWin
     : Fl_Window(width, height, title), mainWindow(mainWindow), lobbyPage(lobbyPage),
     m_settings("config.xml") // Specify the correct file path
 {
-    // Set the username to the current stored username in settings or default
-    m_username = m_settings.getUsername(); // Get the username from settings
-
     setup_ui();
     this->end();  // Finalize the window
 }
@@ -32,7 +29,7 @@ void SettingsWindow::setup_ui() {
     // Username input section
     Fl_Box* username_label = new Fl_Box(20, 20, 100, 30, "Change Username:");
     username_input = new Fl_Input(130, 20, 200, 30, "");
-    username_input->value(m_username.c_str());  // Pre-set the input with the current username
+    username_input->value("");  // Pre-set the input with the current username
 
     // Light/Dark mode toggle
     theme_toggle = new Fl_Check_Button(20, 70, 150, 30, "Enable Dark Mode");

@@ -3,15 +3,25 @@
 #include "LobbyPage.hpp"
 #include <FL/fl_ask.H> // For debugging alerts
 #include <memory>
+#include "Settings.h"  // Include Settings for loading resolution
 
 MainWindow::MainWindow(int width, int height)
     : Fl_Window(width, height), homePage(nullptr), lobbyPage(nullptr), timer(0.1) {
+
+    // Load resolution from settings XML
+    Settings settings("config.xml"); // Path to your settings file
+    std::string username = settings.getUsername();  // Get the username
+    pugi::xml_node userNode = settings.findClient(username);  // Get the XML node for that username
+    auto [savedWidth, savedHeight] = settings.getRes(userNode);  // Get the resolution
+
+    // Resize window with the saved resolution
+    resize(0, 0, savedWidth, savedHeight);
 
     // Make the window resizable
     resizable(this);
 
     // Initialize homePage
-    homePage = new HomePage(0, 0, width, height, this);
+    homePage = new HomePage(0, 0, savedWidth, savedHeight, this);
     if (!homePage) {
         fl_alert("Failed to create HomePage!");
         return;
@@ -20,7 +30,7 @@ MainWindow::MainWindow(int width, int height)
     homePage->show();
 
     // Initialize lobbyPage
-    lobbyPage = new LobbyPage(0, 0, width, height);
+    lobbyPage = new LobbyPage(0, 0, savedWidth, savedHeight);
     if (!lobbyPage) {
         fl_alert("Failed to create LobbyPage!");
         return;
@@ -42,6 +52,9 @@ MainWindow::MainWindow(int width, int height)
     size_range(800, 600, 10000, 10000);
 }
 
+
+
+
 /**
  * @brief Destructor to clean up dynamically allocated pages.
  */
@@ -61,6 +74,10 @@ MainWindow::~MainWindow() {
 void MainWindow::resize(int X, int Y, int W, int H) {
     Fl_Window::resize(X, Y, W, H);
 
+    // Save the resolution to settings
+    Settings settings("settings.xml"); // You can pass the path to your settings file
+    settings.setRes(settings.getUsername(), W, H); // Set the resolution for the current user
+
     if (homePage) {
         homePage->resize(0, 0, W, H);
     }
@@ -69,6 +86,7 @@ void MainWindow::resize(int X, int Y, int W, int H) {
         lobbyPage->resizeWidgets(0, 0, W, H); // Resize the widgets inside LobbyPage
     }
 }
+
 
 /**
  * @brief Timer callback to update the LobbyPage.

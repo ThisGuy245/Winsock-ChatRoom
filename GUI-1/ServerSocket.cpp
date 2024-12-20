@@ -114,6 +114,7 @@ void ServerSocket::closeAllClients()
  * @brief Handles client connections and processes their messages.
  * Accepts new clients, manages username changes, and broadcasts messages to clients.
  */
+ // Handle client connections and process messages, including whispers
 void ServerSocket::handleClientConnections() {
     std::shared_ptr<ClientSocket> client = accept();
 
@@ -150,8 +151,39 @@ void ServerSocket::handleClientConnections() {
 
         // If the client has sent a message, handle it
         if (c->receive(message)) {
+            // Handle whisper (direct message)
+            // Handle whisper (direct message)
+            if (message.rfind("W/", 0) == 0) {  // Check if the message starts with W/
+                size_t spacePos = message.find(" ", 2);  // Find the first space after 'W/'
+                if (spacePos != std::string::npos) {
+                    std::string targetUsername = message.substr(2, spacePos - 2);  // Extract the target username
+                    std::string whisperMessage = message.substr(spacePos + 1);  // Extract the whisper message (everything after the space)
+
+                    // Find the target client by username
+                    auto targetClient = std::find_if(clients.begin(), clients.end(),
+                        [&](const std::shared_ptr<ClientSocket>& client) {
+                            return client->getUsername() == targetUsername;
+                        });
+
+                    if (targetClient != clients.end()) {
+                        // Send whisper message to the target user
+                        (*targetClient)->send("[Whisper] " + c->getUsername() + ": " + whisperMessage);
+                        // Optionally, send feedback to the sender
+                        c->send("[Whisper] You to " + targetUsername + ": " + whisperMessage);
+                    }
+                    else {
+                        // Target user not found, send error message to the sender
+                        c->send("[SERVER]: User '" + targetUsername + "' not found.");
+                    }
+                }
+                else {
+                    // If there’s no space after the username, notify the client
+                    c->send("[SERVER]: Invalid whisper format. Usage: W/username message");
+                }
+            }
+
             // Handle username change command
-            if (message.rfind("/change_username ", 0) == 0) {
+            else if (message.rfind("/change_username ", 0) == 0) {
                 std::string newUsername = message.substr(17); // Extract the new username
 
                 if (handleUsernameChange(c, newUsername)) {
@@ -192,6 +224,7 @@ void ServerSocket::handleClientConnections() {
     }
 }
 
+
 /**
  * @brief Checks if the given username is already taken.
  * @param username The username to check.
@@ -210,6 +243,7 @@ bool ServerSocket::isUsernameTaken(const std::string& username) {
  * @param newUsername The new username.
  * @return true if the username change was successful, false if the new username is already taken.
  */
+ // Handles username change for a client.
 bool ServerSocket::handleUsernameChange(std::shared_ptr<ClientSocket> client, const std::string& newUsername) {
     // Check if the new username is already taken
     if (isUsernameTaken(newUsername)) {
@@ -222,4 +256,3 @@ bool ServerSocket::handleUsernameChange(std::shared_ptr<ClientSocket> client, co
     client->addingPlayer(newUsername);
     return true;
 }
-

@@ -1,7 +1,6 @@
 #include "Settings.h"
 #include <iostream>
 #include <tuple>
-#include <FL/fl_ask.H>
 
 // Constructor: Load the XML file
 Settings::Settings(const std::string& path) : m_path(path)
@@ -54,7 +53,6 @@ pugi::xml_node Settings::findClient(const std::string& username)
             return client;
         }
     }
-    fl_alert("Cannot find user: ", username);
     return pugi::xml_node(); // Return an empty node if not found
 }
 
@@ -77,6 +75,7 @@ void Settings::setUsername(const std::string& newUsername) {
     save();  // Make sure this saves the updated settings to the XML file
 }
 
+
 std::tuple<int, int> Settings::getRes(pugi::xml_node user)
 {
     pugi::xml_node res = user.child("Resolution");
@@ -86,9 +85,10 @@ std::tuple<int, int> Settings::getRes(pugi::xml_node user)
 // Set height
 void Settings::setRes(const std::string& username, int height, int width)
 {
-    findOrCreateClient(username).child("Resolution").child("Width").text() = width;
-    findOrCreateClient(username).child("Resolution").child("Height").text() = height;
-    save();
+    pugi::xml_node user = findOrCreateClient(username); // Retrieve or create the client node
+    user.child("Resolution").child("Width").text() = width;  // Set width
+    user.child("Resolution").child("Height").text() = height;  // Set height
+    save();  // Save the updated settings
 }
 
 // Save changes to the XML file
