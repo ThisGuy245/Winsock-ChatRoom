@@ -5,7 +5,6 @@
 #include <functional>
 #include <vector>
 #include "Timer.h" // Include the Timer header
-
 #include "HomePage.hpp"
 #include "LobbyPage.hpp"
 

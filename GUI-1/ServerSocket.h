@@ -56,7 +56,6 @@ private:
     // Disable copying and assignment
     ServerSocket(const ServerSocket& _copy) = delete;
     ServerSocket& operator=(const ServerSocket& _assign) = delete; 
-
 };
 
 #endif // SERVERSOCKET_H

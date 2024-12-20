@@ -155,8 +155,10 @@ void LobbyPage::sendMessage(const std::string& message) {
  */
 void LobbyPage::receiveMessages() {
     std::string message;
+
     if (client && client->receive(message)) {
         chatBuffer->append((message + "\n").c_str());  // Message already includes username
+
     }
 
     if (server) {

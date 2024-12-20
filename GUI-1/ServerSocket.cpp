@@ -27,7 +27,6 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::s
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
-
     addrinfo* result = NULL;
 
     // Resolve server address and port
@@ -40,16 +39,13 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::s
         freeaddrinfo(result);
         throw std::runtime_error("Failed to create socket");
     }
-
-    // Bind the socket to the server address
     if (bind(m_socket, result->ai_addr, result->ai_addrlen) == SOCKET_ERROR) {
         freeaddrinfo(result);
         throw std::runtime_error("Failed to bind socket");
     }
 
     freeaddrinfo(result);
-
-    // Listen for incoming client connections
+      
     if (listen(m_socket, SOMAXCONN) == SOCKET_ERROR) {
         throw std::runtime_error("Failed to listen on socket");
     }
@@ -134,7 +130,7 @@ void ServerSocket::handleClientConnections() {
             // Announce new connection to all clients
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
         }
-
+      
         printf("Client Connected!\n");
         // Add the new client to the list
         clients.push_back(client);
@@ -177,7 +173,7 @@ void ServerSocket::handleClientConnections() {
                     }
                 }
                 else {
-                    // If there’s no space after the username, notify the client
+                    // If thereï¿½s no space after the username, notify the client
                     c->send("[SERVER]: Invalid whisper format. Usage: W/username message");
                 }
             }

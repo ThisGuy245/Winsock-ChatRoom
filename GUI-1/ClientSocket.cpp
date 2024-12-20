@@ -115,6 +115,7 @@ void ClientSocket::setUsername(const std::string& username) {
     m_username = username;
 }
 
+
 /**
  * @brief Gets the current username of this client.
  * @return The current username of the client.
@@ -250,3 +251,51 @@ void ClientSocket::updateLocalSettings(const std::string& settingsData) {
 bool ClientSocket::closed() {
     return m_closed;
 }
+
+//to accept a message from client socket
+bool ClientSocket::receive(std::string& sender, std::string& message) {
+	char buffer[256] = { 0 }; // Increased buffer size for longer messages
+	int bytes = ::recv(m_socket, buffer, sizeof(buffer) - 1, 0);
+	if (bytes == SOCKET_ERROR) {
+		if (WSAGetLastError() != WSAEWOULDBLOCK) {
+			m_closed = true;
+			return false;
+		}
+		return false;
+	}
+	else if (bytes == 0) {
+		m_closed = true;
+		return false;
+	}
+
+	std::string receivedData = buffer;
+
+	// Parse the sender and message
+	size_t delimiterPos = receivedData.find(": ");
+	if (delimiterPos != std::string::npos) {
+		sender = receivedData.substr(0, delimiterPos);  // Extract username
+		message = receivedData.substr(delimiterPos + 2); // Extract message
+	}
+	else {
+		sender = "Unknown"; // Fallback if no delimiter found
+		message = receivedData;
+	}
+	return true;
+}
+
+
+//to send a message to client socket
+void ClientSocket::send(const std::string& username, const std::string& message) {
+	std::string taggedMessage = username + ": " + message;
+	int bytes = ::send(m_socket, taggedMessage.c_str(), taggedMessage.length(), 0);
+	if (bytes <= 0) {
+		throw std::runtime_error("Failed to send data");
+	}
+}
+
+
+bool ClientSocket::closed()
+{
+	return m_closed;
+}
+

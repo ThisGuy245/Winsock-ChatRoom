@@ -5,8 +5,14 @@
 #include <memory>
 #include "Settings.h"  // Include Settings for loading resolution
 
+/**
+ * @class MainWindow
+ * @brief The main application window managing different pages (HomePage and LobbyPage) and timer functionality.
+ */
+
 MainWindow::MainWindow(int width, int height)
     : Fl_Window(width, height), homePage(nullptr), lobbyPage(nullptr), timer(0.1) {
+
 
     // Load resolution from settings XML
     Settings settings("config.xml"); // Path to your settings file
@@ -22,6 +28,7 @@ MainWindow::MainWindow(int width, int height)
 
     // Initialize homePage
     homePage = new HomePage(0, 0, savedWidth, savedHeight, this);
+
     if (!homePage) {
         fl_alert("Failed to create HomePage!");
         return;
@@ -29,8 +36,10 @@ MainWindow::MainWindow(int width, int height)
     add(homePage);
     homePage->show();
 
+
     // Initialize lobbyPage
     lobbyPage = new LobbyPage(0, 0, savedWidth, savedHeight);
+
     if (!lobbyPage) {
         fl_alert("Failed to create LobbyPage!");
         return;
@@ -38,7 +47,9 @@ MainWindow::MainWindow(int width, int height)
     add(lobbyPage);
     lobbyPage->hide();
 
+
     // Timer for periodic updates
+
     timer.setCallback([](void* userdata) {
         auto* window = static_cast<MainWindow*>(userdata);
         if (window) {
@@ -116,6 +127,7 @@ void MainWindow::setResolution(int width, int height) {
 /**
  * @brief Returns a pointer to the LobbyPage instance.
  * @return Pointer to the LobbyPage instance.
+
  */
 LobbyPage* MainWindow::getLobbyPage() const {
     return lobbyPage;
