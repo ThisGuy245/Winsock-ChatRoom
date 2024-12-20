@@ -1,47 +1,53 @@
-#ifndef SETTINGSWINDOW_HPP
-#define SETTINGSWINDOW_HPP
+#ifndef SETTINGSWINDOW_H
+#define SETTINGSWINDOW_H
 
-// Forward declarations
-class LobbyPage;    // Forward declaration of LobbyPage
-class MainWindow;   // Forward declaration of MainWindow
-
-// FLTK 
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input.H>
-#include <FL/Fl_Choice.H>
 #include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Choice.H>
 #include <FL/Fl_Button.H>
-
-// My Pages
 #include "MainWindow.h"
 #include "LobbyPage.hpp"
+#include "Settings.h"  // Assuming Settings is the class for XML management
+
+class LobbyPage;
+class MainWindow;
 
 class SettingsWindow : public Fl_Window {
 public:
-    LobbyPage* lobbyPage;    // Reference to LobbyPage, will be used directly
-    MainWindow* mainWindow;  // Reference to MainWindow
-
-    // Constructor initializes the window with references to MainWindow and LobbyPage
+    // Constructor
     SettingsWindow(int width, int height, const char* title, MainWindow* mainWindow, LobbyPage* lobbyPage);
+
+    // Destructor
     ~SettingsWindow();
 
-    // Apply changes based on user input
-    void apply_resolution();
-    void apply_changes();  // Removed argument here since lobbyPage is stored as a member
-    void apply_dark_mode();
-
-    Fl_Check_Button* theme_toggle;  // Light/Dark mode switch
-    bool getThemeToggleState() const {
-        return theme_toggle->value();
-    }
+    // Apply settings changes to the main window
+    void apply_changes();
 
 private:
-    Fl_Input* username_input;       // Input box for username
-    Fl_Choice* resolution_choice;   // Dropdown for resolutions
-    Fl_Button* apply_button;        // Apply button
-    Fl_Button* close_button;        // Close button
+    // UI elements
+    Fl_Input* username_input;
+    Fl_Check_Button* theme_toggle;
+    Fl_Choice* resolution_choice;
+    Fl_Button* apply_button;
+    Fl_Button* close_button;
 
-    void setup_ui();         // Internal function to set up UI
+    // Main window and lobby page (used for updates)
+    MainWindow* mainWindow;
+    LobbyPage* lobbyPage;
+
+    // User settings
+    std::string m_username;  // Current username
+    Settings m_settings;     // Settings management object
+
+    // Setup UI components (called by the constructor)
+    void setup_ui();
+
+    // Apply the resolution settings to the main window
+    void apply_resolution();
+
+    // Apply the dark mode setting
+    void apply_dark_mode();
 };
 
-#endif // SETTINGSWINDOW_HPP
+#endif // SETTINGSWINDOW_H

@@ -111,7 +111,7 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
     chatBuffer->append("Server has been created\n");
 
     try {
-        client = new ClientSocket(ip, 12345, username, playerDisplay, "config.xml");
+        client = new ClientSocket(ip, 12345, username, playerDisplay, "config.xml", nullptr);
         chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
     }
     catch (const std::exception& e) {
@@ -127,7 +127,7 @@ void LobbyPage::hostServer(const std::string& ip, const std::string& username) {
  */
 void LobbyPage::joinServer(const std::string& ip, const std::string& username) {
     this->username = username;  // Set the username for this session
-    client = new ClientSocket(ip, 12345, username, playerDisplay, "config.xml");  // Client joins the server
+    client = new ClientSocket(ip, 12345, username, playerDisplay, "config.xml", nullptr);  // Client joins the server
     chatBuffer->append(("[SERVER]: " + username + " has joined the server\n").c_str());
 }
 

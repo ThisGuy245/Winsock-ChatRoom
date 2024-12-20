@@ -55,6 +55,7 @@ pugi::xml_node Settings::findClient(const std::string& username)
         }
     }
     fl_alert("Cannot find user: ", username);
+    return pugi::xml_node(); // Return an empty node if not found
 }
 
 // Get mode
@@ -70,11 +71,16 @@ void Settings::setMode(const std::string& username, const std::string& mode)
     save();
 }
 
+void Settings::setUsername(const std::string& newUsername) {
+    pugi::xml_node user = findOrCreateClient(newUsername);
+    user.child("Username").text() = newUsername.c_str();
+    save();  // Make sure this saves the updated settings to the XML file
+}
 
 std::tuple<int, int> Settings::getRes(pugi::xml_node user)
 {
-     pugi::xml_node res = user.child("Resolution");
-     return std::make_tuple(res.child("Width").text().as_int(), res.child("Height").text().as_int());
+    pugi::xml_node res = user.child("Resolution");
+    return std::make_tuple(res.child("Width").text().as_int(), res.child("Height").text().as_int());
 }
 
 // Set height
@@ -92,4 +98,21 @@ void Settings::save()
     {
         std::cerr << "Failed to save XML file: " << m_path << std::endl;
     }
+}
+
+// Get the username from the settings
+std::string Settings::getUsername() {
+    // Retrieve the first client's username as an example (you can modify this for your needs)
+    pugi::xml_node client = m_doc.child("Clients").child("Client");
+    return client.child("Username").text().as_string();
+}
+
+// Load settings (can be a placeholder for now)
+void Settings::loadSettings() {
+    // Load settings from the XML if needed (in this case it's done in the constructor)
+}
+
+// Save settings (already handled in the save method)
+void Settings::saveSettings() {
+    save();
 }

@@ -9,12 +9,14 @@
 #include "Settings.h"        // Include Settings header
 #include <tuple>
 
+class MainWindow;
+
 class ClientSocket {
 public:
     // Constructors
     explicit ClientSocket(SOCKET socket, PlayerDisplay* playerDisplay, const std::string& settings);
     ClientSocket(const std::string& ipAddress, int port, const std::string& username,
-        PlayerDisplay* playerDisplay, const std::string& settings);
+        PlayerDisplay* playerDisplay, const std::string& settings, MainWindow* mainWindow);
 
     // Destructor
     ~ClientSocket();
@@ -41,6 +43,7 @@ private:
     SOCKET m_socket;
     bool m_closed;
     std::string m_username;
+    MainWindow* mainWindow;
     
 };
 

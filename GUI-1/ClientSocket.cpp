@@ -6,13 +6,13 @@
 #include <stdexcept>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include "MainWindow.h"
 
 /**
  * @brief Constructor for ClientSocket with an existing socket.
  */
 ClientSocket::ClientSocket(SOCKET socket, PlayerDisplay* playerDisplay, const std::string& settings)
-    : m_socket(socket), m_closed(false), playerDisplay(playerDisplay), m_settings(settings) {
-
+    : m_socket(socket), m_closed(false), playerDisplay(playerDisplay), m_settings(settings), mainWindow(nullptr) {
     if (socket == INVALID_SOCKET) {
         throw std::runtime_error("Invalid socket");
     }
@@ -21,10 +21,10 @@ ClientSocket::ClientSocket(SOCKET socket, PlayerDisplay* playerDisplay, const st
 /**
  * @brief Constructor for ClientSocket when connecting to a server.
  */
-ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::string& username, 
-    PlayerDisplay* playerDisplay, const std::string& settings)
-    : m_socket(INVALID_SOCKET), m_closed(false), m_username(username), 
-    playerDisplay(playerDisplay), m_settings(settings) {
+ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::string& username,
+    PlayerDisplay* playerDisplay, const std::string& settings, MainWindow* mainWindow)
+    : m_socket(INVALID_SOCKET), m_closed(false), m_username(username),
+    playerDisplay(playerDisplay), m_settings(settings), mainWindow(mainWindow) {
 
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -62,6 +62,8 @@ ClientSocket::ClientSocket(const std::string& ipAddress, int port, const std::st
     applyUserSettings(); // Apply user settings on connection
 }
 
+
+
 /**
  * @brief Destructor for ClientSocket.
  */
@@ -75,26 +77,36 @@ ClientSocket::~ClientSocket() {
  * @brief Apply user-specific settings from the Settings class.
  */
 void ClientSocket::applyUserSettings() {
-    // Retrieve the user settings node for the current user
     pugi::xml_node user = m_settings.findOrCreateClient(m_username);
 
     // Apply resolution from settings
-    std::tuple<int, int> resolution = m_settings.getRes(user);  // Correctly retrieve tuple
-    int width = std::get<0>(resolution);   // Unpack width
-    int height = std::get<1>(resolution);  // Unpack height
+    std::tuple<int, int> resolution = m_settings.getRes(user);
+    int width = std::get<0>(resolution);
+    int height = std::get<1>(resolution);
 
-    // Display a message for the resolution being applied
-    fl_message("Applying resolution: %dx%d", width, height);
+    // Apply the resolution to the main window
+    if (mainWindow) {
+        mainWindow->setResolution(width, height);
+    }
 
     // Apply dark mode
-    std::string mode = m_settings.getMode(user);  // Get the mode setting (true/false)
+    std::string mode = m_settings.getMode(user);
     if (mode == "true") {
-        fl_message("Dark mode enabled for user: %s", m_username.c_str());
+        // Enable dark mode
+        Fl::background(45, 45, 45);  // Dark background for main window
+        Fl::foreground(255, 255, 255);  // White text
     }
     else {
-        fl_message("Light mode enabled for user: %s", m_username.c_str());
+        // Enable light mode
+        Fl::background(240, 240, 240);  // Light background
+        Fl::foreground(0, 0, 0);  // Black text
+    }
+    if (mainWindow) {
+        mainWindow->redraw();
     }
 }
+
+
 /**
  * @brief Sets the username for this client and updates the global player display.
  * @param username The new username to set for this client.
