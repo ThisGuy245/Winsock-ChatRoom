@@ -113,6 +113,6 @@ void Settings::loadSettings() {
 }
 
 // Save settings (already handled in the save method)
-void Settings::saveSettings() {
+void Settings::saveSettings() { 
     save();
 }
