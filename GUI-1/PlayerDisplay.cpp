@@ -80,6 +80,18 @@ void PlayerDisplay::removePlayer(const std::string& username) {
 }
 
 /**
+ * @brief Clears all players from the display.
+ *
+ * Resets the player list to just the header. Useful when
+ * disconnecting or starting a new session.
+ */
+void PlayerDisplay::clearPlayers() {
+    printf("Clearing all players\n");
+    tbuff->text("Players:\n");  // Reset to header only
+    redraw();
+}
+
+/**
  * @brief Updates the layout of the player display.
  *
  * This function is a placeholder for future layout updates, such as resizing player boxes.

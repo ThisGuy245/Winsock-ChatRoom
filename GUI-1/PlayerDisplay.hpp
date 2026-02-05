@@ -14,6 +14,7 @@ public:
 
     void addPlayer(const std::string& username);
     void removePlayer(const std::string& username);
+    void clearPlayers();  // Clear all players from the list
     void updateLayout();
 
     Fl_Box* sidePanel;

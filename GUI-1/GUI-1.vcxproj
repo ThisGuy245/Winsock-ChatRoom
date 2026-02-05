@@ -141,32 +141,50 @@
     <ClCompile Include="ChatData.cpp" />
     <ClCompile Include="ClientSocket.cpp" />
     <ClCompile Include="fltk\src\Fl_Generic_Image.cpp" />
+    <ClCompile Include="ChannelList.cpp" />
+    <ClCompile Include="FriendService.cpp" />
     <ClCompile Include="HomePage.cpp" />
     <ClCompile Include="LobbyPage.cpp" />
+    <ClCompile Include="LoginPage.cpp" />
+    <ClCompile Include="ServerBrowser.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Models.cpp" />
     <ClCompile Include="MyWidget.cpp" />
+    <ClCompile Include="NetProtocol.cpp" />
     <ClCompile Include="PlayerDisplay.cpp" />
+    <ClCompile Include="Protocol.cpp" />
     <ClCompile Include="pugixml.cpp" />
+    <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="ServerSocket.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="SettingsWindow.cpp" />
+    <ClCompile Include="UserDatabase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutWindow.h" />
     <ClInclude Include="ChatData.hpp" />
     <ClInclude Include="ClientSocket.h" />
+    <ClInclude Include="ChannelList.h" />
+    <ClInclude Include="FriendService.h" />
     <ClInclude Include="HomePage.hpp" />
     <ClInclude Include="LobbyPage.hpp" />
+    <ClInclude Include="LoginPage.h" />
+    <ClInclude Include="ServerBrowser.h" />
+    <ClInclude Include="Models.h" />
     <ClInclude Include="MyWidget.h" />
+    <ClInclude Include="NetProtocol.h" />
     <ClInclude Include="PlayerDisplay.hpp" />
+    <ClInclude Include="Protocol.h" />
     <ClInclude Include="pugiconfig.hpp" />
     <ClInclude Include="pugixml.hpp" />
+    <ClInclude Include="ServerManager.h" />
     <ClInclude Include="ServerSocket.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="SettingsWindow.hpp" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="UserDatabase.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\Downloads\DrawBox.png" />

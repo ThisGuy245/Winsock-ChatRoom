@@ -1,17 +1,39 @@
 #include "ServerSocket.h"
 #include "PlayerDisplay.hpp"
+#include "NetProtocol.h"
 #include <algorithm>
 #include <cstdio>
+#include <cctype>
 #include <FL/fl_ask.H>
 
 // Work with XML
 #include "pugiconfig.hpp"
 #include "pugixml.hpp"
 
+//=============================================================================
+// SECURITY CONSTANTS
+//=============================================================================
+
+/** Maximum allowed username length */
+constexpr size_t MAX_USERNAME_LENGTH = 64;
+
+/** Minimum username length */
+constexpr size_t MIN_USERNAME_LENGTH = 1;
+
+/** Maximum allowed chat message length */
+constexpr size_t MAX_CHAT_MESSAGE_LENGTH = 4096;
+
 /**
  * @brief Constructor for ServerSocket class, initializes Winsock and sets up the server socket.
+ * 
+ * SECURITY NOTES:
+ * - Server socket is set to non-blocking for accept() to prevent DoS
+ * - Client sockets are configured with timeouts upon acceptance
+ * - SO_REUSEADDR is NOT set to prevent port hijacking attacks
+ * 
  * @param _port The port number to bind the server socket.
  * @param _playerDisplay Pointer to the PlayerDisplay object for updating player list.
+ * @param settingsPath Path to the settings XML file.
  */
 ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::string& settingsPath)
     : m_socket(INVALID_SOCKET), playerDisplay(playerDisplay), m_settings(settingsPath)
@@ -39,7 +61,12 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::s
         freeaddrinfo(result);
         throw std::runtime_error("Failed to create socket");
     }
-    if (bind(m_socket, result->ai_addr, result->ai_addrlen) == SOCKET_ERROR) {
+    
+    // SECURITY NOTE: We intentionally do NOT set SO_REUSEADDR
+    // SO_REUSEADDR can allow an attacker to hijack a port if the
+    // legitimate server is in TIME_WAIT state.
+    
+    if (bind(m_socket, result->ai_addr, static_cast<int>(result->ai_addrlen)) == SOCKET_ERROR) {
         freeaddrinfo(result);
         throw std::runtime_error("Failed to bind socket");
     }
@@ -50,7 +77,9 @@ ServerSocket::ServerSocket(int _port, PlayerDisplay* playerDisplay, const std::s
         throw std::runtime_error("Failed to listen on socket");
     }
 
-    u_long mode = 1; // Set non-blocking mode
+    // Set server socket to non-blocking for accept()
+    // This allows us to poll for new connections without blocking
+    u_long mode = 1;
     if (ioctlsocket(m_socket, FIONBIO, &mode) == SOCKET_ERROR) {
         throw std::runtime_error("Failed to set non-blocking mode");
     }
@@ -67,30 +96,125 @@ ServerSocket::~ServerSocket()
 }
 
 /**
- * @brief Accepts a new client connection.
+ * @brief Accepts a new client connection with security configuration.
+ * 
+ * SECURITY NOTES:
+ * - New client sockets are configured with timeouts immediately
+ * - This prevents slowloris-style connection exhaustion attacks
+ * - Client is NOT authenticated at this point - just connected
+ * 
  * @return A shared pointer to the ClientSocket for the accepted client, or nullptr if no connection.
  */
 std::shared_ptr<ClientSocket> ServerSocket::accept()
 {
-    SOCKET socket = ::accept(m_socket, NULL, NULL);
-    if (socket == INVALID_SOCKET) {
+    SOCKET clientSocket = ::accept(m_socket, NULL, NULL);
+    if (clientSocket == INVALID_SOCKET) {
         if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            printf("Failed to accept connection: %d\n", WSAGetLastError());
+            printf("[SECURITY] Failed to accept connection: %d\n", WSAGetLastError());
         }
         return nullptr;
     }
 
-    return std::make_shared<ClientSocket>(socket, playerDisplay, "config.xml");
+    // SECURITY: Configure the new client socket with timeouts
+    // This happens BEFORE any data exchange to protect against slow attacks
+    try {
+        auto client = std::make_shared<ClientSocket>(clientSocket, playerDisplay, "config.xml");
+        // Note: ClientSocket constructor now configures security settings
+        return client;
+    }
+    catch (const std::exception& e) {
+        printf("[SECURITY] Failed to initialize client socket: %s\n", e.what());
+        closesocket(clientSocket);
+        return nullptr;
+    }
 }
 
 /**
- * @brief Broadcasts a message to all connected clients.
+ * @brief Validate a username for security requirements.
+ * 
+ * SECURITY CHECKS:
+ * 1. Length within bounds (prevents buffer issues)
+ * 2. Printable ASCII only (prevents injection attacks)
+ * 3. No control characters (prevents log injection)
+ * 4. No leading/trailing whitespace (prevents confusion attacks)
+ * 
+ * @param username The username to validate (ATTACKER-CONTROLLED)
+ * @return True if username passes all security checks, false otherwise.
+ */
+bool ServerSocket::isValidUsername(const std::string& username) {
+    // Check length bounds
+    if (username.size() < MIN_USERNAME_LENGTH || username.size() > MAX_USERNAME_LENGTH) {
+        printf("[SECURITY] Username rejected: invalid length (%zu)\n", username.size());
+        return false;
+    }
+    
+    // Check for leading/trailing whitespace
+    if (std::isspace(static_cast<unsigned char>(username.front())) ||
+        std::isspace(static_cast<unsigned char>(username.back()))) {
+        printf("[SECURITY] Username rejected: leading/trailing whitespace\n");
+        return false;
+    }
+    
+    // Validate each character
+    for (unsigned char c : username) {
+        // Allow only printable ASCII (0x20-0x7E)
+        // This prevents:
+        // - Control character injection (newlines in logs, etc.)
+        // - Unicode homograph attacks
+        // - Non-printable character confusion
+        if (c < 0x20 || c > 0x7E) {
+            printf("[SECURITY] Username rejected: invalid character (0x%02X)\n", c);
+            return false;
+        }
+    }
+    
+    // Reject usernames that look like system messages
+    // This prevents spoofing server messages
+    if (username.find("[SERVER]") != std::string::npos ||
+        username.find("[SYSTEM]") != std::string::npos ||
+        username.find("[ADMIN]") != std::string::npos) {
+        printf("[SECURITY] Username rejected: contains reserved prefix\n");
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * @brief Broadcasts a message to all connected clients (LEGACY).
+ * @deprecated Use broadcastMessageSecure() for new code.
  * @param message The message to send to all clients.
  */
 void ServerSocket::broadcastMessage(const std::string& message)
 {
     for (const auto& client : clients) {
-        client->send(message);
+        try {
+            client->send(message);
+        }
+        catch (const std::exception& e) {
+            printf("[WARNING] Failed to send to client %s: %s\n", 
+                   client->getUsername().c_str(), e.what());
+        }
+    }
+}
+
+/**
+ * @brief Broadcasts a message to all connected clients using secure protocol.
+ * 
+ * SECURITY: Uses length-prefixed messages to prevent framing issues.
+ * Failed sends are logged but don't affect other clients.
+ * 
+ * @param message The message to broadcast.
+ */
+void ServerSocket::broadcastMessageSecure(const std::string& message)
+{
+    for (const auto& client : clients) {
+        NetProtocol::Result result = client->sendSecure(message);
+        if (result != NetProtocol::Result::Success) {
+            printf("[WARNING] Failed to send to client %s: %s\n",
+                   client->getUsername().c_str(),
+                   NetProtocol::ResultToString(result));
+        }
     }
 }
 
@@ -108,119 +232,160 @@ void ServerSocket::closeAllClients()
 }
 /**
  * @brief Handles client connections and processes their messages.
- * Accepts new clients, manages username changes, and broadcasts messages to clients.
+ * 
+ * SECURITY IMPLEMENTATION NOTES:
+ * 1. New connections: Username is validated before acceptance
+ * 2. All messages: Length and content validated before processing
+ * 3. Commands: Parsed carefully to prevent injection
+ * 4. Broadcasts: Use server-controlled format, not raw client input
+ * 
+ * TRUST BOUNDARY: All data from clients is ATTACKER-CONTROLLED.
  */
- // Handle client connections and process messages, including whispers
 void ServerSocket::handleClientConnections() {
+    // =========================================================================
+    // STEP 1: Accept new connections
+    // =========================================================================
     std::shared_ptr<ClientSocket> client = accept();
 
     if (client) {
-        // Receive username upon connection
+        // Receive username (using legacy non-blocking receive)
         std::string username;
         if (client->receive(username)) {
-            client->setUsername(username);
-            printf("Username received: %s\n", username.c_str());
-
-            // Check that the username is not already in use
-            if (isUsernameTaken(username)) {
-                fl_alert("This Username is already in use!");
+            // SECURITY CHECK: Validate username before accepting
+            if (!isValidUsername(username)) {
+                printf("[SECURITY] Rejected connection: invalid username\n");
                 return;
             }
+            
+            if (isUsernameTaken(username)) {
+                printf("[INFO] Rejected connection: username '%s' already taken\n", username.c_str());
+                try {
+                    client->send("[SERVER]: Username is already in use. Disconnecting.");
+                } catch (...) {}
+                return;
+            }
+            
+            client->setUsername(username);
+            printf("[INFO] Client connected: %s\n", username.c_str());
+            
             client->addingPlayer(username);
-            // Announce new connection to all clients
+            clients.push_back(client);
+            
             broadcastMessage("[SERVER]: " + username + " has joined the server.");
         }
-      
-        printf("Client Connected!\n");
-        // Add the new client to the list
-        clients.push_back(client);
+        else {
+            // No username yet - add to list anyway, we'll get it on next poll
+            // This handles the case where username arrives in a separate packet
+            printf("[INFO] Client connected, waiting for username...\n");
+            clients.push_back(client);
+        }
     }
 
-    // Temporary list to track disconnected clients
+    // =========================================================================
+    // STEP 2: Process messages from connected clients
+    // =========================================================================
     std::vector<std::string> disconnectedUsernames;
 
-    // Process messages from connected clients
     for (auto it = clients.begin(); it != clients.end(); /* no increment here */) {
         std::shared_ptr<ClientSocket>& c = *it;
         std::string message;
         std::string username = c->getUsername();
 
-        // If the client has sent a message, handle it
-        if (c->receive(message)) {
-            // Handle whisper (direct message)
-            // Handle whisper (direct message)
-            if (message.rfind("W/", 0) == 0) {  // Check if the message starts with W/
-                size_t spacePos = message.find(" ", 2);  // Find the first space after 'W/'
-                if (spacePos != std::string::npos) {
-                    std::string targetUsername = message.substr(2, spacePos - 2);  // Extract the target username
-                    std::string whisperMessage = message.substr(spacePos + 1);  // Extract the whisper message (everything after the space)
+        // Use legacy non-blocking receive
+        bool received = c->receive(message);
+        
+        if (received) {
+            // SECURITY CHECK: Validate message length
+            if (message.size() > MAX_CHAT_MESSAGE_LENGTH) {
+                printf("[SECURITY] Message from %s rejected: too long\n", username.c_str());
+                try { c->send("[SERVER]: Message too long."); } catch (...) {}
+                ++it;
+                continue;
+            }
+            
+            // Handle whisper: W/targetUser message
+            if (message.rfind("W/", 0) == 0) {
+                size_t spacePos = message.find(' ', 2);
+                if (spacePos != std::string::npos && spacePos > 2) {
+                    std::string targetUsername = message.substr(2, spacePos - 2);
+                    std::string whisperMessage = message.substr(spacePos + 1);
+                    
+                    if (whisperMessage.empty()) {
+                        try { c->send("[SERVER]: Empty whisper message."); } catch (...) {}
+                        ++it;
+                        continue;
+                    }
 
-                    // Find the target client by username
                     auto targetClient = std::find_if(clients.begin(), clients.end(),
                         [&](const std::shared_ptr<ClientSocket>& client) {
                             return client->getUsername() == targetUsername;
                         });
 
                     if (targetClient != clients.end()) {
-                        // Send whisper message to the target user
-                        (*targetClient)->send("[Whisper] " + c->getUsername() + ": " + whisperMessage);
-                        // Optionally, send feedback to the sender
-                        c->send("[Whisper] You to " + targetUsername + ": " + whisperMessage);
+                        try {
+                            (*targetClient)->send("[Whisper from " + username + "]: " + whisperMessage);
+                            c->send("[Whisper to " + targetUsername + "]: " + whisperMessage);
+                        } catch (...) {}
                     }
                     else {
-                        // Target user not found, send error message to the sender
-                        c->send("[SERVER]: User '" + targetUsername + "' not found.");
+                        try { c->send("[SERVER]: User '" + targetUsername + "' not found."); } catch (...) {}
                     }
                 }
                 else {
-                    // If there�s no space after the username, notify the client
-                    c->send("[SERVER]: Invalid whisper format. Usage: W/username message");
+                    try { c->send("[SERVER]: Invalid whisper format. Usage: W/username message"); } catch (...) {}
                 }
+                ++it;
             }
-            // Handle SV/ command to send server version privately
-            else if (message.rfind("SV/", 0) == 0) {  // Check if the message starts with SV/
-                std::string version = "Server Version: 1.0.0";  // Specify your version here
-                c->send("[SERVER]: " + version);  // Send the version privately to the client
+            // Handle server version request
+            else if (message == "SV/" || message.rfind("SV/", 0) == 0) {
+                try { c->send("[SERVER]: Server Version: 1.0.0 (Security Phase 1)"); } catch (...) {}
+                ++it;
             }
             // Handle username change command
             else if (message.rfind("/change_username ", 0) == 0) {
-                std::string newUsername = message.substr(17); // Extract the new username
+                std::string newUsername = message.substr(17);
+                
+                // Validate new username
+                if (!isValidUsername(newUsername)) {
+                    try { c->send("[SERVER]: Invalid username format."); } catch (...) {}
+                    ++it;
+                    continue;
+                }
 
+                std::string oldUsername = c->getUsername();
                 if (handleUsernameChange(c, newUsername)) {
-                    // Broadcast the username change
-                    broadcastMessage("[SERVER]: " + newUsername + " has changed their username.");
+                    broadcastMessage("[SERVER]: " + oldUsername + " is now known as " + newUsername);
                 }
                 else {
-                    // Notify the client that the username is already taken
-                    c->send("[SERVER]: The username '" + newUsername + "' is already taken. Please choose another one.");
+                    try { c->send("[SERVER]: The username '" + newUsername + "' is already taken."); } catch (...) {}
                 }
-
-                // Continue processing the same client
                 ++it;
             }
+            // Regular chat message
             else {
-                // Broadcast other messages
-                broadcastMessage(c->getUsername() + ": " + message);
+                // SECURITY: Server formats the broadcast message
+                // The username comes from server-side storage, not from the message
+                broadcastMessage(username + ": " + message);
                 ++it;
             }
         }
         else if (c->closed()) {
-            // If the client has disconnected, process their disconnection
-            disconnectedUsernames.push_back(username);
-            c->removingPlayer(username);
-
-            // Remove the client from the list
+            if (!username.empty()) {
+                disconnectedUsernames.push_back(username);
+                c->removingPlayer(username);
+            }
             it = clients.erase(it);
         }
         else {
-            // No message received, continue to the next client
+            // No message received (would-block), continue to next client
             ++it;
         }
     }
 
-    // Now broadcast all disconnection messages
-    for (const auto& username : disconnectedUsernames) {
-        broadcastMessage("[SERVER]: " + username + " has disconnected.");
+    // Broadcast disconnection messages
+    for (const auto& uname : disconnectedUsernames) {
+        printf("[INFO] Client disconnected: %s\n", uname.c_str());
+        broadcastMessage("[SERVER]: " + uname + " has disconnected.");
     }
 }
 

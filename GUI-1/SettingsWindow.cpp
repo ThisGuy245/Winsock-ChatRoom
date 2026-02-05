@@ -99,36 +99,73 @@ void SettingsWindow::apply_resolution() {
 void SettingsWindow::apply_dark_mode() {
     bool isDarkMode = theme_toggle->value();
 
-    // Apply dark/light mode to main window
+    Fl_Color bgColor = isDarkMode ? fl_rgb_color(45, 45, 45) : fl_rgb_color(255, 255, 255);
+    Fl_Color textColor = isDarkMode ? FL_WHITE : FL_BLACK;
+    Fl_Color buttonColor = isDarkMode ? fl_rgb_color(70, 70, 70) : FL_LIGHT2;
+    Fl_Color windowBg = isDarkMode ? fl_rgb_color(60, 60, 60) : fl_rgb_color(240, 240, 240);
+
+    // Apply dark/light mode globally
     if (isDarkMode) {
-        Fl::background(45, 45, 45); // Dark background for main window
-        Fl::foreground(255, 255, 255); // White text
+        Fl::background(45, 45, 45);
+        Fl::foreground(255, 255, 255);
     }
     else {
-        Fl::background(240, 240, 240); // Light background
-        Fl::foreground(0, 0, 0); // Black text
+        Fl::background(240, 240, 240);
+        Fl::foreground(0, 0, 0);
     }
-    mainWindow->redraw();
 
-    // Apply dark/light mode to lobby page components
+    // =========================================================================
+    // Style this Settings window itself
+    // =========================================================================
+    this->color(windowBg);
+    if (username_input) {
+        username_input->color(bgColor);
+        username_input->textcolor(textColor);
+        username_input->redraw();
+    }
+    if (theme_toggle) {
+        theme_toggle->labelcolor(textColor);
+        theme_toggle->redraw();
+    }
+    if (resolution_choice) {
+        resolution_choice->color(bgColor);
+        resolution_choice->textcolor(textColor);
+        resolution_choice->redraw();
+    }
+    this->redraw();
+
+    // =========================================================================
+    // Style HomePage
+    // =========================================================================
+    if (mainWindow && mainWindow->homePage) {
+        mainWindow->homePage->applyTheme(isDarkMode);
+    }
+
+    // =========================================================================
+    // Style LobbyPage (uses its own applyTheme method now)
+    // =========================================================================
     if (lobbyPage) {
-        if (lobbyPage->scrollArea) {
-            lobbyPage->scrollArea->color(isDarkMode ? fl_rgb_color(60, 60, 60) : fl_rgb_color(255, 255, 255));
-            lobbyPage->scrollArea->redraw();
-        }
-        if (lobbyPage->chatDisplay) {
-            lobbyPage->chatDisplay->color(isDarkMode ? fl_rgb_color(50, 50, 50) : fl_rgb_color(255, 255, 255));
-            lobbyPage->chatDisplay->textcolor(isDarkMode ? FL_WHITE : FL_BLACK);
-            lobbyPage->chatDisplay->redraw();
-        }
-        if (lobbyPage->messageInput) {
-            lobbyPage->messageInput->color(isDarkMode ? fl_rgb_color(45, 45, 45) : fl_rgb_color(255, 255, 255));
-            lobbyPage->messageInput->textcolor(isDarkMode ? FL_WHITE : FL_BLACK);
-            lobbyPage->messageInput->redraw();
-        }
-        if (lobbyPage->playerDisplay) {
+        lobbyPage->applyTheme(isDarkMode);
+        
+        // Also style player display specifically
+        if (lobbyPage->playerDisplay && lobbyPage->playerDisplay->disp) {
             lobbyPage->playerDisplay->disp->color(isDarkMode ? fl_rgb_color(60, 60, 60) : fl_rgb_color(255, 255, 255));
-            lobbyPage->playerDisplay->redraw();
+            lobbyPage->playerDisplay->disp->textcolor(textColor);
+            lobbyPage->playerDisplay->disp->redraw();
+        }
+        
+        // Style About window if it exists
+        if (lobbyPage->about) {
+            lobbyPage->about->applyTheme(isDarkMode);
         }
     }
+
+    // =========================================================================
+    // Style new Discord-like pages
+    // =========================================================================
+    if (mainWindow) {
+        mainWindow->applyThemeToAll(isDarkMode);
+    }
+
+    mainWindow->redraw();
 }

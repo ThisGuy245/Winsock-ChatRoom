@@ -4,6 +4,7 @@
 #include <FL/Fl_Button.H>        // For button widget
 #include <FL/Fl_Window.H>        // For window class
 #include <FL/Fl_Text_Buffer.H>   // For text buffer class
+#include <FL/fl_draw.H>          // For fl_rgb_color
 
 /**
  * @brief Constructor initializes the AboutWindow UI with information and a close button
@@ -75,6 +76,35 @@ void AboutWindow::show_about_info() {
     buffer->text(about_info.c_str()); // Set the text in the display
 }
 
+
+/**
+ * @brief Applies dark or light theme to the About window.
+ * @param isDarkMode True for dark mode, false for light mode.
+ */
+void AboutWindow::applyTheme(bool isDarkMode) {
+    Fl_Color bgColor = isDarkMode ? fl_rgb_color(45, 45, 45) : fl_rgb_color(255, 255, 255);
+    Fl_Color textColor = isDarkMode ? FL_WHITE : FL_BLACK;
+    Fl_Color windowBg = isDarkMode ? fl_rgb_color(60, 60, 60) : fl_rgb_color(240, 240, 240);
+    
+    // Window background
+    this->color(windowBg);
+    
+    // Info text display
+    if (info_text) {
+        info_text->color(bgColor);
+        info_text->textcolor(textColor);
+        info_text->redraw();
+    }
+    
+    // Close button
+    if (close_button) {
+        close_button->color(isDarkMode ? fl_rgb_color(70, 70, 70) : FL_LIGHT2);
+        close_button->labelcolor(textColor);
+        close_button->redraw();
+    }
+    
+    redraw();
+}
 
 /**
  * @brief Callback function to close the About window when the close button is clicked

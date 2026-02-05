@@ -2,6 +2,7 @@
 #include "MainWindow.h"
 #include "LobbyPage.hpp"
 #include <FL/fl_ask.H>
+#include <FL/fl_draw.H>
 #include <stdexcept>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -106,6 +107,44 @@ void HomePage::joinButtonCallback(Fl_Widget* widget, void* userdata) {
     catch (const std::runtime_error& e) {
         fl_alert("Failed to join server: %s", e.what());
     }
+}
+
+/**
+ * @brief Applies dark or light theme to all HomePage widgets.
+ * @param isDarkMode True for dark mode, false for light mode.
+ */
+void HomePage::applyTheme(bool isDarkMode) {
+    Fl_Color bgColor = isDarkMode ? fl_rgb_color(45, 45, 45) : fl_rgb_color(255, 255, 255);
+    Fl_Color textColor = isDarkMode ? FL_WHITE : FL_BLACK;
+    Fl_Color buttonColor = isDarkMode ? fl_rgb_color(70, 70, 70) : FL_LIGHT2;
+    
+    // Style input fields
+    if (usernameInput) {
+        usernameInput->color(bgColor);
+        usernameInput->textcolor(textColor);
+        usernameInput->redraw();
+    }
+    
+    if (ipInput) {
+        ipInput->color(bgColor);
+        ipInput->textcolor(textColor);
+        ipInput->redraw();
+    }
+    
+    // Style buttons
+    if (hostButton) {
+        hostButton->color(buttonColor);
+        hostButton->labelcolor(textColor);
+        hostButton->redraw();
+    }
+    
+    if (joinButton) {
+        joinButton->color(buttonColor);
+        joinButton->labelcolor(textColor);
+        joinButton->redraw();
+    }
+    
+    redraw();
 }
 
 /**

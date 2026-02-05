@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<UserDatabase>
+	<Users>
+		<User id="116019070014295925" username="Thomas" createdAt="1770310516" lastLoginAt="0" salt="92b64a2a06271e0e820f7bc36bb55081a3bf4ce96774dbcb60e193e811758df0" hash="2cd9e0daace1a9ddf6fcc2d22bf99ce5e69da908be973797ceec3a116a179454">
+			<Servers />
+			<Friends />
+		</User>
+	</Users>
+</UserDatabase>

@@ -4,8 +4,8 @@
 		<Username />
 		<Dark>false</Dark>
 		<Resolution>
-			<Width>800</Width>
-			<Height>989</Height>
+			<Width>600</Width>
+			<Height>800</Height>
 		</Resolution>
 	</Client>
 </Clients>

@@ -13,10 +13,11 @@ public:
     ~AboutWindow();
 
     void show_about_info();
+    void applyTheme(bool isDarkMode);  // Theme support
 
 private:
     Fl_Button* close_button;
-    Fl_Text_Display* info_text;  // Change to Fl_Text_Display* here
+    Fl_Text_Display* info_text;
     Fl_Text_Buffer* buffer;
 
     static void close_callback(Fl_Widget* widget, void* userdata);

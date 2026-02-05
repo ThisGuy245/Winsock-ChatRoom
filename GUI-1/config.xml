@@ -44,7 +44,7 @@
 		<Username />
 		<Dark>false</Dark>
 		<Resolution>
-			<Width>600</Width>
+			<Width>800</Width>
 			<Height>800</Height>
 		</Resolution>
 	</Client>
@@ -66,6 +66,54 @@
 	</Client>
 	<Client>
 		<Username>asg</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>fasd</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>asdas</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>ThomasHello</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>ThomasThomas</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>ads</Username>
+		<Dark>false</Dark>
+		<Resolution>
+			<Width>800</Width>
+			<Height>600</Height>
+		</Resolution>
+	</Client>
+	<Client>
+		<Username>Thommy</Username>
 		<Dark>false</Dark>
 		<Resolution>
 			<Width>800</Width>

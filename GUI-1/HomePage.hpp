@@ -19,12 +19,17 @@ public:
     // Callback functions for host and join buttons
     static void hostButtonCallback(Fl_Widget* widget, void* userdata);
     static void joinButtonCallback(Fl_Widget* widget, void* userdata);
+    
+    // Theme support
+    void applyTheme(bool isDarkMode);
 
-private:
+    // Widgets (public for theme access)
     Fl_Input* usernameInput;
     Fl_Input* ipInput;
     Fl_Button* hostButton;
     Fl_Button* joinButton;
+
+private:
     MainWindow* mainWindow;
 
     std::string getLocalIPAddress();
