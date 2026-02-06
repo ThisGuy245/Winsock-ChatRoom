@@ -158,6 +158,7 @@
     <ClCompile Include="ServerSocket.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="MessageService.cpp" />
     <ClCompile Include="SettingsWindow.cpp" />
     <ClCompile Include="UserDatabase.cpp" />
   </ItemGroup>
@@ -182,6 +183,7 @@
     <ClInclude Include="ServerSocket.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="MessageService.h" />
     <ClInclude Include="SettingsWindow.hpp" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UserDatabase.h" />

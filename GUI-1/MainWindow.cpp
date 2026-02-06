@@ -97,6 +97,9 @@ MainWindow::MainWindow(int width, int height)
     // Setup callbacks between pages
     setupPageCallbacks();
 
+    // End adding widgets to this window
+    end();
+
     // Start with the new Discord-like login flow
     loginPage->show();
 
@@ -131,6 +134,7 @@ void MainWindow::initializeServices() {
     userDatabase = std::make_unique<UserDatabase>("user_data.xml");
     serverManager = std::make_unique<ServerManager>("server_data.xml", *userDatabase);
     friendService = std::make_unique<FriendService>("friend_data.xml", *userDatabase);
+    messageService = std::make_unique<MessageService>("message_history.xml");
 }
 
 void MainWindow::setupPageCallbacks() {
@@ -168,11 +172,18 @@ void MainWindow::setupPageCallbacks() {
         });
         
         channelList->setOnChannelSelected([this](uint64_t channelId, const std::string& channelName) {
-            printf("[APP] Channel selected: #%s\n", channelName.c_str());
-            currentChannelId = channelId;
-            // Update the channel name in the lobby page
-            if (lobbyPage) {
+            printf("[APP] Channel selected: #%s (ID: %llu)\n", channelName.c_str(), channelId);
+            
+            // Load channel history
+            if (lobbyPage && messageService) {
+                // Update channel name in UI
                 lobbyPage->setChannelName(channelName);
+                
+                // Store current channel ID
+                currentChannelId = channelId;
+                
+                // Load this channel's message history
+                lobbyPage->loadChannelHistory(channelId, messageService.get());
             }
         });
     }
@@ -276,7 +287,26 @@ void MainWindow::switchToChat(uint64_t serverId, const std::string& serverName) 
     
     if (lobbyPage) {
         lobbyPage->setServerName(serverName);
-        lobbyPage->setChannelName("general");  // Default channel
+        lobbyPage->setMessageService(messageService.get());
+        
+        // Get the server's default channel (first channel, usually "general")
+        auto channels = serverManager->GetServerChannels(serverId);
+        if (!channels.empty()) {
+            uint64_t defaultChannelId = channels[0].channelId;
+            std::string defaultChannelName = channels[0].channelName;
+            
+            currentChannelId = defaultChannelId;
+            lobbyPage->setChannelName(defaultChannelName);
+            lobbyPage->setCurrentChannel(defaultChannelId);
+            
+            // Load channel history
+            lobbyPage->loadChannelHistory(defaultChannelId, messageService.get());
+            
+            printf("[APP] Default channel: #%s (ID: %llu)\n", defaultChannelName.c_str(), defaultChannelId);
+        } else {
+            lobbyPage->setChannelName("general");
+        }
+        
         lobbyPage->resize(chatX, 0, chatWidth, h());
         lobbyPage->resizeWidgets(chatX, 0, chatWidth, h());
         lobbyPage->show();
@@ -507,8 +537,8 @@ void MainWindow::connectToServer(uint64_t serverId) {
         return;
     }
     
-    // Check if server has network info
-    if (server.hostIpAddress.empty()) {
+    // Check if server is online and has network info
+    if (!server.isOnline || server.hostIpAddress.empty()) {
         fl_alert("Server is not online. The owner must be hosting for you to connect.");
         switchToServerBrowser();
         return;

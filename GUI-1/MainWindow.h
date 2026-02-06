@@ -14,6 +14,7 @@
 #include "UserDatabase.h"
 #include "ServerManager.h"
 #include "FriendService.h"
+#include "MessageService.h"
 
 // Forward declarations
 class HomePage;
@@ -65,6 +66,7 @@ public:
     std::unique_ptr<UserDatabase> userDatabase;
     std::unique_ptr<ServerManager> serverManager;
     std::unique_ptr<FriendService> friendService;
+    std::unique_ptr<MessageService> messageService;
     
     // Current user session
     uint64_t currentUserId;

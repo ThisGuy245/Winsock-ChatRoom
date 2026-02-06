@@ -28,6 +28,8 @@ LobbyPage::LobbyPage(int X, int Y, int W, int H)
     , darkMode(false)
     , currentServerName("Server")
     , currentChannelName("general")
+    , currentChannelId(0)
+    , messageService(nullptr)
 {
     begin();
     
@@ -440,6 +442,67 @@ void LobbyPage::cleanupSession() {
     if (chatDisplay) {
         chatDisplay->redraw();
     }
+    currentChannelId = 0;
+}
+
+/**
+ * @brief Load message history for a specific channel
+ */
+void LobbyPage::loadChannelHistory(uint64_t channelId, MessageService* service) {
+    if (!chatBuffer || !service) {
+        return;
+    }
+    
+    // Store references
+    messageService = service;
+    currentChannelId = channelId;
+    
+    // Reload from file to get latest messages from other users
+    service->ReloadFromFile();
+    
+    // Clear current chat display
+    chatBuffer->text("");
+    
+    // Load messages for this channel
+    auto messages = service->GetChannelMessages(channelId);
+    
+    printf("[LOBBY] Loading %zu messages for channel %llu\n", messages.size(), channelId);
+    
+    for (const auto& msg : messages) {
+        // Messages are stored as they were received from the server
+        // Just display them directly
+        chatBuffer->append((msg.content + "\n").c_str());
+    }
+    
+    // Scroll to bottom
+    if (chatDisplay) {
+        chatDisplay->scroll(chatBuffer->count_lines(0, chatBuffer->length()), 0);
+        chatDisplay->redraw();
+    }
+}
+
+/**
+ * @brief Save a user message to the channel history
+ */
+void LobbyPage::saveMessageToHistory(const std::string& senderName, const std::string& content) {
+    if (!messageService || currentChannelId == 0) {
+        return;
+    }
+    
+    // The content already includes "username: message" format from the server
+    // Store it directly
+    messageService->AddMessage(currentChannelId, 0, senderName, content, Models::MessageType::Text);
+}
+
+/**
+ * @brief Save a system message to the channel history
+ */
+void LobbyPage::saveSystemMessageToHistory(const std::string& content) {
+    if (!messageService || currentChannelId == 0) {
+        return;
+    }
+    
+    messageService->AddSystemMessage(currentChannelId, content);
 }
 
 void LobbyPage::sendMessage(const std::string& message) {
@@ -452,6 +515,18 @@ void LobbyPage::receiveMessages() {
     std::string message;
     if (client && client->receive(message)) {
         chatBuffer->append((message + "\n").c_str());
+        
+        // Save to channel history
+        if (messageService && currentChannelId != 0) {
+            // Check if it's a system message (join/leave)
+            if (message.find("[SERVER]:") != std::string::npos) {
+                saveSystemMessageToHistory(message);
+            } else {
+                // Regular user message - store the whole formatted message
+                saveMessageToHistory(username, message);
+            }
+        }
+        
         // Auto-scroll to bottom
         chatDisplay->scroll(chatBuffer->count_lines(0, chatBuffer->length()), 0);
     }

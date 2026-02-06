@@ -16,6 +16,7 @@
 #include "PlayerDisplay.hpp"
 #include "SettingsWindow.hpp"
 #include "AboutWindow.h"
+#include "MessageService.h"
 
 // Forward declarations
 class SettingsWindow;
@@ -46,10 +47,18 @@ public:
     std::string getUsername() const { return username; }
     void setServerName(const std::string& name);
     void setChannelName(const std::string& name);
+    void setCurrentChannel(uint64_t channelId) { currentChannelId = channelId; }
+    uint64_t getCurrentChannel() const { return currentChannelId; }
     void clientLeft(const std::string& username);
     void resizeWidgets(int X, int Y, int W, int H);
     void changeUsername(const std::string& newUsername);
     void cleanupSession();
+    
+    // Channel-based message history
+    void setMessageService(MessageService* service) { messageService = service; }
+    void loadChannelHistory(uint64_t channelId, MessageService* service);
+    void saveMessageToHistory(const std::string& senderName, const std::string& content);
+    void saveSystemMessageToHistory(const std::string& content);
     
     // Theme support
     void applyTheme(bool isDarkMode);
@@ -103,8 +112,12 @@ private:
     std::string username;
     std::string currentServerName;
     std::string currentChannelName;
+    uint64_t currentChannelId;
     uint16_t currentPort;
     bool darkMode;
+    
+    // Message service for persistent history
+    MessageService* messageService;
     
     std::function<void()> onBackClicked;
     std::function<void()> onSettingsClicked;
