@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <ServerDatabase>
 	<Servers>
-		<Server id="116019071766863417" name="Thommy Lair" ownerId="116019070014295925" createdAt="1770310543">
+		<Server id="116019071766863417" name="Thommy Lair" ownerId="116019070014295925" createdAt="1770310543" hostIp="192.168.0.186" hostPort="54000" isOnline="true">
 			<Members>
 				<Member id="116019070014295925" />
 			</Members>
@@ -10,7 +10,7 @@
 				<ChannelRef id="116019409110191825" />
 			</Channels>
 		</Server>
-		<Server id="116019419918336440" name="My Serversecond Tet" ownerId="116019070014295925" createdAt="1770315855">
+		<Server id="116019419918336440" name="My Serversecond Tet" ownerId="116019070014295925" createdAt="1770315855" hostIp="192.168.0.186" hostPort="54000" isOnline="false">
 			<Members>
 				<Member id="116019070014295925" />
 			</Members>

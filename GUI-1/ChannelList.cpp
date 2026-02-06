@@ -49,66 +49,72 @@ ChannelList::~ChannelList() {
 }
 
 void ChannelList::setupLayout() {
-    int margin = 8;
-    int buttonHeight = 30;
-    int headerHeight = 20;
+    int margin = 10;
+    int buttonHeight = 32;
+    int headerHeight = 24;
     int currentY = y() + margin;
     
-    // Back button
-    backButton = new Fl_Button(x() + margin, currentY, 60, buttonHeight, "< Back");
-    backButton->box(FL_FLAT_BOX);
-    backButton->labelsize(11);
+    // Back button - modern styled
+    backButton = new Fl_Button(x() + margin, currentY, 70, buttonHeight, "@< Back");
+    backButton->box(FL_ROUNDED_BOX);
+    backButton->labelsize(12);
+    backButton->color(ACCENT_COLOR);
+    backButton->labelcolor(FL_WHITE);
     backButton->callback(onBackClicked, this);
-    currentY += buttonHeight + margin;
+    currentY += buttonHeight + margin + 5;
     
     // Server name with options button
-    serverNameLabel = new Fl_Box(x() + margin, currentY, w() - 60, 30, "Server Name");
-    serverNameLabel->labelsize(14);
+    serverNameLabel = new Fl_Box(x() + margin, currentY, w() - 60, 32, "Server Name");
+    serverNameLabel->labelsize(16);
     serverNameLabel->labelfont(FL_BOLD);
     serverNameLabel->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     
-    serverOptionsButton = new Fl_Button(x() + w() - 45, currentY, 35, 30, "...");
-    serverOptionsButton->box(FL_FLAT_BOX);
-    serverOptionsButton->labelsize(14);
+    serverOptionsButton = new Fl_Button(x() + w() - 45, currentY, 35, 32, "@menu");
+    serverOptionsButton->box(FL_ROUNDED_BOX);
+    serverOptionsButton->labelsize(12);
     serverOptionsButton->callback(onServerOptionsClicked, this);
-    currentY += 35 + margin;
+    currentY += 40 + margin;
     
     // Channels header
     channelsHeader = new Fl_Box(x() + margin, currentY, w() - 2 * margin, headerHeight, "TEXT CHANNELS");
-    channelsHeader->labelsize(10);
+    channelsHeader->labelsize(11);
     channelsHeader->labelfont(FL_BOLD);
     channelsHeader->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    currentY += headerHeight;
+    currentY += headerHeight + 5;
     
     // Calculate heights for lists (split remaining space)
-    int remainingHeight = h() - (currentY - y()) - margin;
-    int channelListHeight = static_cast<int>(remainingHeight * 0.5);  // 50% for channels
-    int memberListHeight = static_cast<int>(remainingHeight * 0.35);  // 35% for members
+    int remainingHeight = h() - (currentY - y()) - margin - buttonHeight - 10;
+    int channelListHeight = static_cast<int>(remainingHeight * 0.45);  // 45% for channels
+    int memberListHeight = static_cast<int>(remainingHeight * 0.40);   // 40% for members
     
-    // Channel list
+    // Channel list - modern styling
     channelList = new Fl_Hold_Browser(x() + margin, currentY, w() - 2 * margin, channelListHeight);
-    channelList->textsize(12);
+    channelList->textsize(13);
+    channelList->box(FL_FLAT_BOX);
+    channelList->has_scrollbar(Fl_Browser_::VERTICAL);
     channelList->callback(onChannelListSelected, this);
-    currentY += channelListHeight;
+    currentY += channelListHeight + 5;
     
     // Add channel button (for owners)
     addChannelButton = new Fl_Button(x() + margin, currentY, w() - 2 * margin, buttonHeight, "+ Add Channel");
-    addChannelButton->box(FL_FLAT_BOX);
-    addChannelButton->labelsize(11);
+    addChannelButton->box(FL_ROUNDED_BOX);
+    addChannelButton->labelsize(12);
     addChannelButton->callback(onAddChannelClicked, this);
     addChannelButton->hide();  // Only shown for owners
     currentY += buttonHeight + margin;
     
     // Members header
     membersHeader = new Fl_Box(x() + margin, currentY, w() - 2 * margin, headerHeight, "MEMBERS");
-    membersHeader->labelsize(10);
+    membersHeader->labelsize(11);
     membersHeader->labelfont(FL_BOLD);
     membersHeader->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-    currentY += headerHeight;
+    currentY += headerHeight + 5;
     
-    // Member list
+    // Member list - modern styling  
     memberList = new Fl_Hold_Browser(x() + margin, currentY, w() - 2 * margin, memberListHeight);
-    memberList->textsize(12);
+    memberList->textsize(13);
+    memberList->box(FL_FLAT_BOX);
+    memberList->has_scrollbar(Fl_Browser_::VERTICAL);
 }
 
 void ChannelList::setServer(uint64_t serverId, uint64_t userId) {
@@ -208,15 +214,16 @@ void ChannelList::applyTheme(bool isDarkMode) {
     if (isDarkMode) {
         color(DARK_BG);
         
-        backButton->color(DARK_ITEM);
-        backButton->labelcolor(DARK_TEXT);
+        // Back button - keep accent color for visibility
+        backButton->color(ACCENT_COLOR);
+        backButton->labelcolor(FL_WHITE);
         
         serverNameLabel->labelcolor(DARK_TEXT);
         serverOptionsButton->color(DARK_ITEM);
         serverOptionsButton->labelcolor(DARK_TEXT);
         
         channelsHeader->labelcolor(DARK_MUTED);
-        channelList->color(DARK_BG);
+        channelList->color(DARK_ITEM);
         channelList->textcolor(DARK_TEXT);
         channelList->selection_color(ACCENT_COLOR);
         
@@ -224,16 +231,18 @@ void ChannelList::applyTheme(bool isDarkMode) {
         addChannelButton->labelcolor(DARK_TEXT);
         
         membersHeader->labelcolor(DARK_MUTED);
-        memberList->color(DARK_BG);
+        memberList->color(DARK_ITEM);
         memberList->textcolor(DARK_TEXT);
+        memberList->selection_color(ACCENT_COLOR);
     } else {
         color(LIGHT_BG);
         
-        backButton->color(FL_WHITE);
-        backButton->labelcolor(LIGHT_TEXT);
+        // Back button - keep accent color for visibility
+        backButton->color(ACCENT_COLOR);
+        backButton->labelcolor(FL_WHITE);
         
         serverNameLabel->labelcolor(LIGHT_TEXT);
-        serverOptionsButton->color(FL_WHITE);
+        serverOptionsButton->color(fl_rgb_color(220, 220, 220));
         serverOptionsButton->labelcolor(LIGHT_TEXT);
         
         channelsHeader->labelcolor(fl_rgb_color(100, 100, 100));
@@ -241,12 +250,13 @@ void ChannelList::applyTheme(bool isDarkMode) {
         channelList->textcolor(LIGHT_TEXT);
         channelList->selection_color(ACCENT_COLOR);
         
-        addChannelButton->color(FL_WHITE);
+        addChannelButton->color(fl_rgb_color(220, 220, 220));
         addChannelButton->labelcolor(LIGHT_TEXT);
         
         membersHeader->labelcolor(fl_rgb_color(100, 100, 100));
         memberList->color(FL_WHITE);
         memberList->textcolor(LIGHT_TEXT);
+        memberList->selection_color(ACCENT_COLOR);
     }
     
     redraw();

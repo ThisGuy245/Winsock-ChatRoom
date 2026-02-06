@@ -66,6 +66,10 @@ public:
     // Connection state
     bool isConnected() const { return client != nullptr || server != nullptr; }
     bool isHosting() const { return server != nullptr; }
+    
+    // UI Control - for when ChannelList sidebar is shown
+    void setHeaderVisible(bool visible);
+    void setMemberPanelVisible(bool visible);
 
     // UI Components - Header
     Fl_Group* headerBar;

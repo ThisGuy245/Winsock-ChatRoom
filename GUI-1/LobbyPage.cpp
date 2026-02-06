@@ -228,33 +228,43 @@ void LobbyPage::setChannelName(const std::string& name) {
  * @brief Resize all widgets when window size changes
  */
 void LobbyPage::resizeWidgets(int X, int Y, int W, int H) {
-    // Header bar
-    headerBar->resize(X, Y, W, HEADER_HEIGHT);
-    backButton->resize(X + PADDING, Y + 10, 70, 30);
-    serverNameLabel->resize(X + 90, Y + 5, W - 250, 20);
-    channelNameLabel->resize(X + 90, Y + 25, W - 250, 20);
-    settingsButton->resize(X + W - 90, Y + 10, 35, 30);
-    aboutButton->resize(X + W - 50, Y + 10, 35, 30);
+    // Check what's visible to adjust layout
+    bool headerVisible = headerBar && headerBar->visible();
+    bool memberPanelVisible = memberPanel && memberPanel->visible();
     
-    // Main area
-    int mainY = Y + HEADER_HEIGHT;
-    int mainH = H - HEADER_HEIGHT - INPUT_BAR_HEIGHT;
-    int chatW = W - MEMBER_PANEL_WIDTH;
+    // Header bar (only if visible)
+    int headerHeight = headerVisible ? HEADER_HEIGHT : 0;
+    if (headerVisible) {
+        headerBar->resize(X, Y, W, HEADER_HEIGHT);
+        backButton->resize(X + PADDING, Y + 10, 70, 30);
+        serverNameLabel->resize(X + 90, Y + 5, W - 250, 20);
+        channelNameLabel->resize(X + 90, Y + 25, W - 250, 20);
+        settingsButton->resize(X + W - 90, Y + 10, 35, 30);
+        aboutButton->resize(X + W - 50, Y + 10, 35, 30);
+    }
+    
+    // Calculate main area dimensions
+    int mainY = Y + headerHeight;
+    int mainH = H - headerHeight - INPUT_BAR_HEIGHT;
+    int memberW = memberPanelVisible ? MEMBER_PANEL_WIDTH : 0;
+    int chatW = W - memberW;
     
     mainArea->resize(X, mainY, W, mainH);
     
-    // Chat area
+    // Chat area (expands when member panel is hidden)
     chatArea->resize(X, mainY, chatW, mainH);
     chatDisplay->resize(X + PADDING, mainY + PADDING, chatW - 2 * PADDING, mainH - 2 * PADDING);
     
-    // Member panel
-    memberPanel->resize(X + chatW, mainY, MEMBER_PANEL_WIDTH, mainH);
-    memberHeaderLabel->resize(X + chatW + PADDING, mainY + PADDING, MEMBER_PANEL_WIDTH - 2 * PADDING, 25);
-    playerDisplay->resize(X + chatW + PADDING, mainY + 40, MEMBER_PANEL_WIDTH - 2 * PADDING, mainH - 50);
+    // Member panel (only if visible)
+    if (memberPanelVisible) {
+        memberPanel->resize(X + chatW, mainY, MEMBER_PANEL_WIDTH, mainH);
+        memberHeaderLabel->resize(X + chatW + PADDING, mainY + PADDING, MEMBER_PANEL_WIDTH - 2 * PADDING, 25);
+        playerDisplay->resize(X + chatW + PADDING, mainY + 40, MEMBER_PANEL_WIDTH - 2 * PADDING, mainH - 50);
+    }
     
-    // Input bar
+    // Input bar (spans full width when member panel is hidden)
     int inputY = Y + H - INPUT_BAR_HEIGHT;
-    int inputW = W - MEMBER_PANEL_WIDTH - 100 - 3 * PADDING;
+    int inputW = chatW - 100 - 3 * PADDING;
     
     inputBar->resize(X, inputY, W, INPUT_BAR_HEIGHT);
     messageInput->resize(X + PADDING, inputY + 15, inputW, 30);
@@ -340,6 +350,26 @@ void LobbyPage::updateColors() {
     redraw();
 }
 
+void LobbyPage::setHeaderVisible(bool visible) {
+    if (headerBar) {
+        if (visible) {
+            headerBar->show();
+        } else {
+            headerBar->hide();
+        }
+    }
+}
+
+void LobbyPage::setMemberPanelVisible(bool visible) {
+    if (memberPanel) {
+        if (visible) {
+            memberPanel->show();
+        } else {
+            memberPanel->hide();
+        }
+    }
+}
+
 // =============================================================================
 // NETWORKING METHODS
 // =============================================================================
@@ -390,7 +420,16 @@ void LobbyPage::hostServer() {
 }
 
 void LobbyPage::joinServer() {
-    cleanupSession();
+    // Don't call cleanupSession here - it clears channelId which we need
+    // Just clean up network resources
+    if (client) {
+        delete client;
+        client = nullptr;
+    }
+    if (server) {
+        delete server;
+        server = nullptr;
+    }
     
     std::string ip = "127.0.0.1";
     int port = 54000;
@@ -406,12 +445,18 @@ void LobbyPage::joinServer() {
     }
     currentPort = static_cast<uint16_t>(port);
     
+    printf("[LOBBY] Attempting to join %s:%d as '%s'\n", ip.c_str(), port, username.c_str());
+    
     try {
         client = new ClientSocket(ip, port, username, playerDisplay, "config.xml", nullptr);
-        printf("[LOBBY] Joining %s:%d as '%s'\n", ip.c_str(), port, username.c_str());
+        if (client) {
+            chatBuffer->append("Connected to server!\n");
+            printf("[LOBBY] Successfully connected to %s:%d\n", ip.c_str(), port);
+        }
     }
     catch (const std::exception& e) {
         chatBuffer->append(("[ERROR]: Failed to connect: " + std::string(e.what()) + "\n").c_str());
+        printf("[LOBBY] Connection failed: %s\n", e.what());
     }
 }
 
@@ -506,29 +551,76 @@ void LobbyPage::saveSystemMessageToHistory(const std::string& content) {
 }
 
 void LobbyPage::sendMessage(const std::string& message) {
-    if (client && !message.empty()) {
-        client->send(message);
+    if (message.empty()) {
+        return;
     }
+    
+    if (!client) {
+        chatBuffer->append("[ERROR]: Not connected to server\n");
+        printf("[LOBBY] Cannot send message - not connected\n");
+        return;
+    }
+    
+    // Prefix message with channel ID for routing
+    // Format: [CH:channelId]message
+    std::string channelMessage = "[CH:" + std::to_string(currentChannelId) + "]" + message;
+    client->send(channelMessage);
+    printf("[LOBBY] Sent to channel %llu: %s\n", currentChannelId, message.c_str());
 }
 
 void LobbyPage::receiveMessages() {
     std::string message;
     if (client && client->receive(message)) {
-        chatBuffer->append((message + "\n").c_str());
+        printf("[LOBBY] Received raw: %s\n", message.c_str());
         
-        // Save to channel history
-        if (messageService && currentChannelId != 0) {
-            // Check if it's a system message (join/leave)
-            if (message.find("[SERVER]:") != std::string::npos) {
-                saveSystemMessageToHistory(message);
-            } else {
-                // Regular user message - store the whole formatted message
-                saveMessageToHistory(username, message);
+        // Check if message has channel prefix [CH:id]
+        uint64_t messageChannelId = 0;
+        std::string displayMessage = message;
+        
+        if (message.rfind("[CH:", 0) == 0) {
+            // Parse channel ID from prefix
+            size_t endBracket = message.find(']');
+            if (endBracket != std::string::npos && endBracket > 4) {
+                std::string channelIdStr = message.substr(4, endBracket - 4);
+                try {
+                    messageChannelId = std::stoull(channelIdStr);
+                    displayMessage = message.substr(endBracket + 1);
+                } catch (...) {
+                    // Failed to parse, treat as channel 0 (global)
+                    messageChannelId = 0;
+                }
             }
         }
         
-        // Auto-scroll to bottom
-        chatDisplay->scroll(chatBuffer->count_lines(0, chatBuffer->length()), 0);
+        // System messages (join/leave) go to all channels
+        bool isSystemMessage = (displayMessage.find("[SERVER]:") != std::string::npos);
+        
+        // Only display if it's for current channel or is a system message
+        bool shouldDisplay = isSystemMessage || 
+                            (messageChannelId == 0) || 
+                            (messageChannelId == currentChannelId);
+        
+        if (shouldDisplay) {
+            chatBuffer->append((displayMessage + "\n").c_str());
+            
+            // Auto-scroll to bottom
+            if (chatDisplay) {
+                chatDisplay->scroll(chatBuffer->count_lines(0, chatBuffer->length()), 0);
+                chatDisplay->redraw();
+            }
+        }
+        
+        // Save to channel history (use message's channel or current if not specified)
+        if (messageService) {
+            uint64_t saveChannelId = (messageChannelId != 0) ? messageChannelId : currentChannelId;
+            if (saveChannelId != 0) {
+                if (isSystemMessage) {
+                    messageService->AddSystemMessage(saveChannelId, displayMessage);
+                } else {
+                    messageService->AddMessage(saveChannelId, 0, username, displayMessage, Models::MessageType::Text);
+                }
+            }
+        }
     }
     if (server) {
         server->handleClientConnections();

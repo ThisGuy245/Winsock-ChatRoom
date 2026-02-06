@@ -113,7 +113,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>fltk\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>fltk.lib;ws2_32.lib;gdiplus.lib;comctl32.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fltk.lib;ws2_32.lib;gdiplus.lib;comctl32.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,7 +133,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>fltk\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>fltk.lib;ws2_32.lib;gdiplus.lib;comctl32.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fltk.lib;ws2_32.lib;gdiplus.lib;comctl32.lib;fltk_images.lib;fltk_png.lib;fltk_z.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -144,9 +144,12 @@
     <ClCompile Include="ChannelList.cpp" />
     <ClCompile Include="FriendService.cpp" />
     <ClCompile Include="HomePage.cpp" />
+    <ClCompile Include="InviteToken.cpp" />
     <ClCompile Include="LobbyPage.cpp" />
     <ClCompile Include="LoginPage.cpp" />
+    <ClCompile Include="SecureHandshake.cpp" />
     <ClCompile Include="ServerBrowser.cpp" />
+    <ClCompile Include="ServerIdentity.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Models.cpp" />
     <ClCompile Include="MyWidget.cpp" />
@@ -169,9 +172,12 @@
     <ClInclude Include="ChannelList.h" />
     <ClInclude Include="FriendService.h" />
     <ClInclude Include="HomePage.hpp" />
+    <ClInclude Include="InviteToken.h" />
     <ClInclude Include="LobbyPage.hpp" />
     <ClInclude Include="LoginPage.h" />
+    <ClInclude Include="SecureHandshake.h" />
     <ClInclude Include="ServerBrowser.h" />
+    <ClInclude Include="ServerIdentity.h" />
     <ClInclude Include="Models.h" />
     <ClInclude Include="MyWidget.h" />
     <ClInclude Include="NetProtocol.h" />

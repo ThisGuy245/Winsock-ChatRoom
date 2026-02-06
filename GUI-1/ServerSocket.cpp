@@ -365,7 +365,20 @@ void ServerSocket::handleClientConnections() {
             else {
                 // SECURITY: Server formats the broadcast message
                 // The username comes from server-side storage, not from the message
-                broadcastMessage(username + ": " + message);
+                
+                // Check for channel prefix [CH:id] and preserve it
+                std::string channelPrefix = "";
+                std::string actualMessage = message;
+                
+                if (message.rfind("[CH:", 0) == 0) {
+                    size_t endBracket = message.find(']');
+                    if (endBracket != std::string::npos) {
+                        channelPrefix = message.substr(0, endBracket + 1);
+                        actualMessage = message.substr(endBracket + 1);
+                    }
+                }
+                
+                broadcastMessage(channelPrefix + username + ": " + actualMessage);
                 ++it;
             }
         }

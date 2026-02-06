@@ -289,6 +289,10 @@ void MainWindow::switchToChat(uint64_t serverId, const std::string& serverName) 
         lobbyPage->setServerName(serverName);
         lobbyPage->setMessageService(messageService.get());
         
+        // Hide LobbyPage's header and member panel (ChannelList has these)
+        lobbyPage->setHeaderVisible(false);
+        lobbyPage->setMemberPanelVisible(false);
+        
         // Get the server's default channel (first channel, usually "general")
         auto channels = serverManager->GetServerChannels(serverId);
         if (!channels.empty()) {
@@ -353,8 +357,8 @@ void MainWindow::onTick(void* userdata) {
         lobbyPage->Update();
     }
 
-    // Repeat the timer callback
-    Fl::repeat_timeout(1.0, [](void* userdata) {
+    // Repeat the timer callback (0.1 second for more responsive chat)
+    Fl::repeat_timeout(0.1, [](void* userdata) {
         auto* window = static_cast<MainWindow*>(userdata);
         if (window) {
             window->onTick(userdata);
@@ -530,12 +534,21 @@ void MainWindow::startHostingServer(uint64_t serverId) {
 void MainWindow::connectToServer(uint64_t serverId) {
     printf("[NET] Connecting to server (ID: %llu)\n", serverId);
     
+    // Refresh server data from file to get latest online status
+    serverManager->RefreshFromFile();
+    
     // Get server info
     Models::ChatServer server;
     if (!serverManager->GetServer(serverId, server)) {
         fl_alert("Failed to get server information!");
         return;
     }
+    
+    printf("[NET] Server '%s' - Online: %s, IP: %s, Port: %d\n",
+           server.serverName.c_str(),
+           server.isOnline ? "YES" : "NO",
+           server.hostIpAddress.c_str(),
+           server.hostPort);
     
     // Check if server is online and has network info
     if (!server.isOnline || server.hostIpAddress.empty()) {

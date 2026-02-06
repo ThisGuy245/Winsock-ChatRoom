@@ -134,6 +134,72 @@ void ServerManager::SetServerOnlineStatus(uint64_t serverId, bool isOnline) {
     }
 }
 
+void ServerManager::RefreshFromFile() {
+    std::lock_guard<std::mutex> lock(managerMutex);
+    
+    // Clear current data
+    serversById.clear();
+    channelsById.clear();
+    
+    // Reload from file - match exact structure from LoadFromFile
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file(databaseFilePath.c_str());
+    
+    if (!result) {
+        printf("[SERVER] Failed to refresh server data from file\n");
+        return;
+    }
+    
+    pugi::xml_node root = doc.child("ServerDatabase");
+    if (!root) {
+        printf("[SERVER] Invalid server database structure\n");
+        return;
+    }
+    
+    // Load channels first (servers reference them)
+    pugi::xml_node channelsNode = root.child("Channels");
+    for (pugi::xml_node channelNode : channelsNode.children("Channel")) {
+        Models::Channel channel;
+        channel.channelId = channelNode.attribute("id").as_ullong();
+        channel.serverId = channelNode.attribute("serverId").as_ullong();
+        channel.channelName = channelNode.attribute("name").as_string();
+        channel.createdAt = channelNode.attribute("createdAt").as_llong();
+        
+        channelsById[channel.channelId] = channel;
+    }
+    
+    // Load servers
+    pugi::xml_node serversNode = root.child("Servers");
+    for (pugi::xml_node serverNode : serversNode.children("Server")) {
+        Models::ChatServer server;
+        server.serverId = serverNode.attribute("id").as_ullong();
+        server.serverName = serverNode.attribute("name").as_string();
+        server.ownerId = serverNode.attribute("ownerId").as_ullong();
+        server.createdAt = serverNode.attribute("createdAt").as_llong();
+        
+        // Load network info
+        server.hostIpAddress = serverNode.attribute("hostIp").as_string();
+        server.hostPort = static_cast<uint16_t>(serverNode.attribute("hostPort").as_uint());
+        server.isOnline = serverNode.attribute("isOnline").as_bool();
+        
+        // Load members
+        pugi::xml_node membersNode = serverNode.child("Members");
+        for (pugi::xml_node memberNode : membersNode.children("Member")) {
+            server.memberIds.push_back(memberNode.attribute("id").as_ullong());
+        }
+        
+        // Load channel references
+        pugi::xml_node channelRefsNode = serverNode.child("Channels");
+        for (pugi::xml_node channelRefNode : channelRefsNode.children("ChannelRef")) {
+            server.channelIds.push_back(channelRefNode.attribute("id").as_ullong());
+        }
+        
+        serversById[server.serverId] = server;
+    }
+    
+    printf("[SERVER] Refreshed: %zu servers, %zu channels\n", serversById.size(), channelsById.size());
+}
+
 Protocol::ErrorCode ServerManager::RenameServer(
     uint64_t serverId,
     const std::string& newName,
@@ -586,6 +652,11 @@ bool ServerManager::SaveToFile() {
         serverNode.append_attribute("ownerId") = server.ownerId;
         serverNode.append_attribute("createdAt") = static_cast<long long>(server.createdAt);
         
+        // Save network info
+        serverNode.append_attribute("hostIp") = server.hostIpAddress.c_str();
+        serverNode.append_attribute("hostPort") = server.hostPort;
+        serverNode.append_attribute("isOnline") = server.isOnline;
+        
         // Save member list
         pugi::xml_node membersNode = serverNode.append_child("Members");
         for (uint64_t memberId : server.memberIds) {
@@ -648,6 +719,11 @@ bool ServerManager::LoadFromFile() {
         server.serverName = serverNode.attribute("name").as_string();
         server.ownerId = serverNode.attribute("ownerId").as_ullong();
         server.createdAt = serverNode.attribute("createdAt").as_llong();
+        
+        // Load network info
+        server.hostIpAddress = serverNode.attribute("hostIp").as_string();
+        server.hostPort = static_cast<uint16_t>(serverNode.attribute("hostPort").as_uint());
+        server.isOnline = serverNode.attribute("isOnline").as_bool();
         
         // Load members
         pugi::xml_node membersNode = serverNode.child("Members");

@@ -89,6 +89,11 @@ public:
     void SetServerOnlineStatus(uint64_t serverId, bool isOnline);
     
     /**
+     * @brief Reload server data from file (to get updates from other instances)
+     */
+    void RefreshFromFile();
+    
+    /**
      * @brief Rename a server (owner only)
      * @param serverId Server to rename
      * @param newName New server name

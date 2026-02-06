@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<MessageHistory>
+	<Channel id="116019071766839051">
+		<Message id="116023166060630266" senderId="0" timestamp="1770373017" type="1" edited="false" senderName="[SERVER]">[SERVER]: Thomas has joined the server.</Message>
+		<Message id="116023167076504881" senderId="0" timestamp="1770373032" type="0" edited="false" senderName="Thomas">Thomas: this didn't save the last application</Message>
+		<Message id="116023384914598125" senderId="0" timestamp="1770376356" type="1" edited="false" senderName="[SERVER]">[SERVER]: Thomas has joined the server.</Message>
+		<Message id="116023388193314437" senderId="0" timestamp="1770376406" type="1" edited="false" senderName="[SERVER]">[SERVER]: Thomas has joined the server.</Message>
+	</Channel>
+	<Channel id="116019409110191825">
+		<Message id="116023167429620401" senderId="0" timestamp="1770373038" type="0" edited="false" senderName="Thomas">Thomas: quel dommage</Message>
+	</Channel>
+	<Channel id="116019419918346194">
+		<Message id="116023385367067427" senderId="0" timestamp="1770376363" type="1" edited="false" senderName="[SERVER]">[SERVER]: Thomas has joined the server.</Message>
+	</Channel>
+</MessageHistory>
